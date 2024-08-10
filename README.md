@@ -1,2 +1,2 @@
-# RH_NC
+# RH
 root hair mutant microbiome
