@@ -1,0 +1,117 @@
+---
+title: "Fig5"
+author: "ZH"
+date: "2024-08-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Fig. 5a
+```{r}
+# 读取数据
+otu <- read.table("KEGG_ko.txt", header = TRUE, row.names = 1, sep = "\t")
+colnames(otu) <- gsub("Col.0", "Col_0", colnames(otu))
+otu <- round(otu)
+
+meta <- read.table("metagenome_meta.txt", header = TRUE, row.names = 1, sep = "\t")
+rownames(meta) <- gsub("-", "_", rownames(meta))
+plotmeta <- within(meta, betaGroup <- paste0(compartment, "_", genotype, "_", group))
+plotdata <- otu[, rownames(plotmeta)]
+
+# 去除0行和仅在一个样本中出现的KO
+plotdata <- plotdata[rowSums(plotdata > 0) >= 2,]
+
+# 绘图
+source("/Users/zhenghongwang/Desktop/EasyAmplicon/my_function/groupPcoa.R")
+
+pcoa <- groupPcoa(
+  plotdata,
+  plotmeta,
+  cg = "betaGroup",
+  sg = "betaGroup",
+  title = paste("RH", unique(plotmeta$group), unique(plotmeta$compartment), sep = "_"),
+  ellipse = TRUE,
+  text_name = FALSE,
+  point_size = 3
+)
+
+p <- pcoa[[3]] +
+  stat_chull(geom = "polygon", aes(group = betaGroup, color = betaGroup, fill = betaGroup), alpha = 0.1) +
+  scale_shape_manual(values = c(16, 16, 16, 17, 17, 17), guide = guide_legend(reverse = TRUE)) +
+  scale_color_manual(values = c("forestgreen", "steelblue3", "orange2", "forestgreen", "steelblue3", "orange2"), guide = guide_legend(reverse = TRUE))
+
+library(ggside)
+p
+```
+
+
+# Fig.5e
+```{r}
+library(microeco)
+library(dplyr)
+
+otu <- read.csv("metabolites_count.csv", header = TRUE, row.names = 1)
+tax <- read.csv("metabolites_tax.csv", header = TRUE, row.names = 1) %>% 
+  select(Class_I, Level) %>% 
+  filter(Level != 4) %>% 
+  mutate(Class_I = gsub(" ","_", Class_I), Class_I = gsub("Others", "Others0", Class_I))
+
+md <- read.csv("metabolome_metadata.csv", header = TRUE, row.names = 1)
+md$Sample_ID <- row.names(md)
+
+otu <- otu[row.names(tax),]
+colnames(otu) <- gsub("Col.0", "Col-0", colnames(otu))
+otu <- otu %>% select(md$Sample_ID)
+
+dataset <- microtable$new(otu_table = otu, tax_table = tax, sample_table = md)
+
+t1 <- trans_abund$new(dataset = dataset, taxrank = "Class_I", ntaxa = 9, groupmean = "genotype")
+p <- t1$plot_bar()
+write.table(data.frame(p$data), "data_barplot_chongjitu.txt", sep = "\t", row.names = FALSE)
+
+pdata <- read.table("data_barplot_chongjitu.txt", header = TRUE) %>% 
+  group_by(Taxonomy) %>% 
+  mutate(mean_abun = mean(Abundance)) %>% 
+  ungroup() %>% 
+  arrange(desc(mean_abun))
+
+pdata$Taxonomy <- factor(pdata$Taxonomy, levels = c("Others", rev(unique(pdata$Taxonomy)[unique(pdata$Taxonomy) != "Others"])))
+
+# 色板
+platte20 <- c(
+  "#E4908D","#C79DC9","#FFDE18","#D3F0F2","#FAE2C1","#A7F2B2","#AFC7E8","#EDB31E",
+  "#A7AA36","#477DAB","#E84D94","#9BD2EB","#27B2AF","#9271B1","#F0868C","#6BBC47",
+  "#FDEA9C","#04ae54","#C5DC89","#3583B8"
+)
+
+library(ggalluvial)
+
+pdata$Sample <- factor(pdata$Sample, levels = c("rsl2rsl4", "Col-0", "gl2"))
+
+p <- ggplot(pdata, aes(x = Sample, y = Abundance, fill = Taxonomy, stratum = Taxonomy, alluvium = Taxonomy)) +
+  geom_bar(stat = "identity", position = "fill", width = 0.5) +
+  geom_alluvium(aes(fill = Taxonomy), width = 0.5) +
+  geom_stratum(width = 0.5, alpha = 0.5) +
+  geom_flow(stat = "flow", position = "fill", alpha = 0.3) +
+  scale_fill_manual(values = c("grey70", platte20[2:18]), guide = guide_legend(reverse = TRUE)) +
+  xlab("Groups") + ylab("Percentage(%)") +
+  theme_classic() +
+  theme(axis.text.x = element_text(colour = "black", angle = 90), legend.position = "right")
+
+p
+
+
+```
+
+
+
+
+
+
+
+
+
+

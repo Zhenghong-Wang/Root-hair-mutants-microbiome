@@ -1,0 +1,65 @@
+---
+title: "Fig.6"
+author: "ZH"
+date: "2024-08-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#---
+```{r}
+# 读取数据
+otu <- read.csv("metabolites_count.csv", header = TRUE, row.names = 1)
+colnames(otu) <- gsub("Col.0", "Col-0", colnames(otu))
+tax <- read.csv("metabolites_tax.csv", header = TRUE, row.names = 1)
+tax <- tax[c("Class_II", "Level")]
+tax$Class_II <- paste0("c_", tax$Class_II)
+
+# 仅保留二级鉴定代谢物
+tax <- tax[tax$Level != 4,]
+otu <- otu[rownames(tax),]
+
+# 去除NPR1
+md <- read.csv("metabolome_metadata.csv", header = TRUE, row.names = 1)
+otu <- otu[, rownames(md)]
+
+# 绘制PCA图
+design <- "genotype"
+platte <- c("forestgreen", "steelblue3", "orange2")
+md$genotype <- factor(md$genotype, levels = c("Col-0", "gl2", "rsl2rsl4"))
+
+p <- sp_pca(otu, md, color_variable = design) +
+  #aes(size = 0.2) +
+  geom_point(size=3.0)+
+  scale_shape_manual(values = c(19)) +
+  scale_color_manual(values = platte) +
+  guides(size = "none") +
+  labs(title = "RH_DT_En_all_metabolites_pca") +
+  mytheme
+
+p
+# 保存图像
+# ggplot2::ggsave("RH_metabolome_all_metabolites_pca_level.pdf", p, device = "pdf", width = 5, height = 3.8)
+```
+
+#mytheme
+```{r}
+mytheme<- theme(
+  plot.title  = element_text(color = "black", size   = 8, hjust = 0.5),  #主标题样式
+  #plot.subtitle = element_text(color = "black", size   = 8,hjust = 0.5),  #副标题样式
+  text=element_text(size=10,face="plain"),
+  axis.title=element_text(size=12,face="bold",color="black"),   #轴标题样式
+  axis.text = element_text(size=10,face="plain",color="black"),  #轴刻度样式
+  axis.text.x = element_text(colour = "black",angle = 0), 
+  legend.title = element_text(size=10,face="bold",color="black"), #图例标题
+  legend.text = element_text(size=10,face="plain",color="black"),  #图例样式
+  legend.background = element_blank(),                            #图例背景
+  legend.position="right",                             #图例位置，指定与否默认右侧，不要:none
+  axis.line.y = element_line(color = "black", linetype = "solid",size=0.2), # y轴线特征
+  axis.line.x = element_line (color = "black",linetype = "solid",size=0.2), # x轴线特征
+  panel.grid.major =element_blank(), panel.grid.minor = element_blank(),# 去除任何网格和背景   
+  panel.border = element_rect( size = 0.2,fill = NA))
+```
