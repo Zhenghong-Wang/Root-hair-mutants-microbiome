@@ -1,0 +1,150 @@
+---
+title: "sup_Fig7"
+author: "ZH"
+date: "2024-08-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#sup_fig_6
+```{r}
+# 加载必要的库
+library(dplyr)
+library(ggplot2)
+
+# 定义参数和输入文件路径
+top_F <- factor(c("Pseudomonadaceae", "Rhizobiaceae", "Comamonadaceae",
+                    "Oxalobacteraceae", "Flavobacteriaceae", "Chitinophagaceae", "Others"), ordered = TRUE)
+prefix <- "RH"
+groupId <- c("DT", "WT")
+comId <- c("En", "Rhi")
+para <- c("igraph.degree", "igraph.closeness", "igraph.betweenness", "igraph.cen.degree")
+level <- c("Family")
+
+r.threshold <- 0.7
+p.threshold <- 0.05
+method <- "spearman"
+
+# 初始化数据框
+r1 <- data.frame()
+r2 <- data.frame()
+r3 <- data.frame()
+
+# 处理和绘图
+i<-comId[1]
+k<-groupId[1]
+    zipi <- read.table(paste0("En_network_Node_properties.txt"), header = TRUE)
+    tax <- read.csv("node_taxonomy.csv", header = TRUE)
+    dataijk <- zipi %>% filter(group %in% paste(prefix, i, c("gl2", "rsl2rsl4", "Col_0"), k, sep = "_"))
+    taxijk <- tax %>% filter(ASVID %in% unique(dataijk$ASVID))
+    plotdata <- merge(dataijk, taxijk, by = "ASVID")
+    plotdata$group <- gsub(paste0(prefix, "_", i, "_"), "", plotdata$group)
+    plotdata$group <- gsub(paste0("_", k), "", plotdata$group)
+
+    for (x in para) {
+      plotdata2 <- plotdata %>% mutate(Family = ifelse(Family %in% top_F, Family, "Others"))
+      plotdata2 <- plotdata2 %>% select(parameter = get(x), ASVID, group, Family) %>% rename(level = Family)
+      plotdata2$parameter <- as.numeric(plotdata2$parameter)
+
+      plotdata3 <- plotdata2
+      plotdata3_ing <- data.frame()
+      for (q in unique(plotdata3$level)) {
+        dat_ing <- plotdata3 %>% filter(level == q) %>% filter(group %in% c("gl2", "rsl2rsl4", "Col_0"))
+        plotdata3_ing <- rbind(plotdata3_ing, dat_ing)
+      }
+
+      plotdata3_ing$group <- factor(plotdata3_ing$group, levels = c("rsl2rsl4", "Col_0", "gl2"))
+
+      p1 <- ggplot(plotdata3_ing, aes(x = level, y = parameter, color = group)) +
+        coord_cartesian(ylim = c(0.9 * min(plotdata3_ing$parameter), 1.0 * max(plotdata3_ing$parameter))) +
+        geom_boxplot() +
+        scale_color_manual(values = c("orange2", "forestgreen", "steelblue3")) +
+        scale_x_discrete(limits = top_F20) +
+        labs(title = paste(i, k, "Family", x, "mutant", "VS", "Col_0", sep = "_"), x = "", y = x) +
+        theme_bw() + mytheme
+
+      plotname <- paste0(pa2, prefix, "_", method, "_", i, "_", k, "_Family_", x, "_mutant_VS_Col_0_0729.pdf")
+      #ggsave(plotname, p1, device = "pdf", width = 10, height = 3.8)
+    }
+
+
+
+
+```
+
+
+
+
+#sup_fig_7
+```{r}
+# 读取数据
+sj <- read.table("En_network_Node_properties.txt", header = TRUE)
+tax <- read.csv("node_taxonomy.csv", header = TRUE)
+
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(fitdistrplus)
+library(ggpmisc)
+
+# 合并数据并筛选节点
+top_F20 <- c("Pseudomonadaceae", "Rhizobiaceae", "Comamonadaceae", 
+             "Oxalobacteraceae", "Flavobacteriaceae", "Chitinophagaceae", "Others")
+sj2 <- sj %>%
+  inner_join(tax, by = "ASVID") %>%
+  mutate(Family = ifelse(Family %in% top_F20, Family, "Others"))
+
+# 筛选特定组别
+sj3 <- sj2 %>% filter(group == "DT")
+if (length(unique(sj3$network_group)) == 1 & unique(sj3$group)[1] == "WT") {
+  sj3$network_group <- factor(sj3$network_group, levels = c("RH_DT_rsl2rsl4_En", "RH_DT_Col_0_En", "RH_DT_gl2_En"))
+}
+
+# 获取特定网络组和计算阈值
+i <- unique(sj3$network_group)[3]
+sjing <- sj3 %>% filter(network_group == i)
+
+compute_threshold <- function(data, column, p_value = 0.9) {
+  fit <- fitdist(data[[column]], "lnorm")
+  qlnorm(p_value, meanlog = fit$estimate[1], sdlog = fit$estimate[2])
+}
+
+threshold1 <- compute_threshold(sjing, "igraph.degree")
+threshold2 <- compute_threshold(sjing, "igraph.closeness")
+
+sjing2 <- sjing %>% filter(igraph.betweenness != 0)
+threshold3 <- compute_threshold(sjing2, "igraph.betweenness")
+
+# 标签准备
+sjing <- sjing %>%
+  mutate(
+    label1 = ifelse(igraph.degree >= threshold1 & igraph.closeness >= threshold2, ASVID, ""),
+    label2 = ifelse(igraph.degree >= threshold1 & igraph.betweenness >= threshold3, ASVID, "")
+  )
+
+# 绘图函数
+plot_graph <- function(data, x, y, threshold_x, threshold_y, label_column, xlab, ylab, title, xlim, ylim) {
+  ggplot(data, aes_string(x = x, y = y, color = "Family")) +
+    coord_cartesian(xlim = xlim, ylim = ylim) +
+    geom_point(size = 2) +
+    scale_color_manual(values = c("palegreen2", "red", "forestgreen", "cyan4", "orange2", "brown4", "grey")) +
+    geom_vline(xintercept = threshold_x, colour = 'orange', lty = 2, cex = 1) +
+    geom_hline(yintercept = threshold_y, colour = 'orange', lty = 2, cex = 1) +
+    labs(title = title, x = xlab, y = ylab) +
+    theme_classic() + mytheme +
+    geom_text(aes_string(label = label_column), size = 1)
+}
+
+# 绘制并保存图形
+p <- plot_graph(sjing, "igraph.closeness", "igraph.degree", threshold2, threshold1, "label1", 
+                "Closeness centrality", "Degree centrality", paste0(i, " network"), c(0.20, 0.50), c(0, 30))
+ggsave(paste0(i, "hub_cor_igraph.closeness_igraph.degree.pdf"), p, width = 4.5, height = 5.5)
+
+p1 <- plot_graph(sjing, "igraph.betweenness", "igraph.degree", threshold3, threshold1, "label2", 
+                 "Betweenness centrality", "Degree centrality", paste0(i, " network"), c(0, 700), c(0, 30))
+ggsave(paste0(i, "hub_cor_igraph.betweenness_igraph.degree.pdf"), p1, width = 4.5, height = 5.5)
+
+p1
+```

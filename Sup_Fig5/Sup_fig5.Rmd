@@ -1,0 +1,73 @@
+---
+title: "sup_Fig5"
+author: "ZH"
+date: "2024-08-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#sup_fig_5
+
+```{r}
+# 加载必要的库
+library(dplyr)
+library(reshape)
+library(ggplot2)
+
+# 定义参数和输入文件路径
+prefix <- "RH"
+otutab <- read.csv("otutab.csv", header = TRUE, row.names = 1)
+design <- read.table("metadata.txt", header = TRUE, row.names = 1)
+
+# 样本分组设计
+design <- design %>%
+  mutate(
+    bargroup = paste0(group, "_", compartment, "_", genotype) %>%
+      gsub("-", "_", .) %>%
+      gsub("Endosphere", "En", .) %>%
+      gsub("Rhizosphere", "Rhi", .) %>%
+      gsub("DT_Drought_soil_BS", "DT_BS", .) %>%
+      gsub("WT_Water_soil_BS", "WT_BS", .),
+    betaGroup = factor(bargroup, levels = c(
+      "WT_BS", "DT_BS",
+      "WT_Rhi_rsl2rsl4", "WT_Rhi_Col_0", "WT_Rhi_gl2", 
+      "DT_Rhi_rsl2rsl4", "DT_Rhi_Col_0", "DT_Rhi_gl2", 
+      "WT_En_rsl2rsl4", "WT_En_Col_0", "WT_En_gl2", 
+      "DT_En_rsl2rsl4", "DT_En_Col_0", "DT_En_gl2"
+    ))
+  )
+
+# 读取分类信息并过滤
+tax <- read.table("taxonomy.txt", header = TRUE, row.names = 1) %>%
+  filter(rownames(.) %in% rownames(otutab))
+
+# 验证数据维度是否一致
+stopifnot(dim(tax)[1] == dim(otutab)[1])
+stopifnot(dim(design)[1] == dim(otutab)[2])
+
+# 色板
+palette20 <- c(
+  "#E4908D", "#C79DC9", "#FFDE18", "#D3F0F2", "#FAE2C1", "#A7F2B2", "#AFC7E8", "#EDB31E", 
+  "#A7AA36", "#477DAB", "#E84D94", "#9BD2EB", "#27B2AF", "#9271B1", "#F0868C", "#6BBC47", 
+  "#FDEA9C", "#04ae54", "#C5DC89", "#3583B8"
+)
+
+# 建立数据集
+dataset <- microtable$new(otu_table = otutab, tax_table = tax, sample_table = design)
+
+# 分组信息
+taxlevel <- "Phylum" 
+facet <- "betaGroup"    
+Nt <- 10    
+
+# 转换和绘图
+t1 <- trans_abund$new(dataset = dataset, taxrank = taxlevel, ntaxa = Nt, groupmean = facet)
+p <- t1$plot_bar(legend_text_italic = FALSE) +
+  scale_fill_manual(values = c("grey70", palette20[1:20]), guide = guide_legend(reverse = TRUE))
+
+print(p)
+
+```

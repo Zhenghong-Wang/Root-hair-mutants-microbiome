@@ -1,0 +1,101 @@
+---
+title: "sup_Fig4"
+author: "ZH"
+date: "2024-08-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#sup_fig.4
+```{r}
+# 基因型确定
+  g1<-c("Col_0","gl2","rhd7","cpc","rsl2rsl4")
+#mydata<-read.csv("RH_root_structure_NS_S_shoot_weight.csv",header = TRUE,row.names = 1)  
+#第一批次，两个干旱pot异常，可能是由于浇水错误导致的
+mydata<-read.csv("soil_type_microbiome_effect.csv",header = TRUE)  
+mydata<-mydata %>% dplyr::filter(genotype %in% g1 & soil_type=="HS")
+mydata$weight<-ifelse(mydata$genotype=="rsl2rsl4" & mydata$treat=="S",mydata$weight,mydata$weight)
+mydata$weight<-ifelse(mydata$treat=="NS",mydata$weight,mydata$weight)
+
+mydata$treat<-ifelse(mydata$treat=="S","Sterilized",mydata$treat)
+mydata$treat<-ifelse(mydata$treat=="NS","Non-sterilized",mydata$treat)
+#mydata$DRI<-log(mydata$DRI)
+#mydata$DRI<-log(5)-mydata$DRI
+
+#鲜重比计算
+weight_loss<-data.frame()
+library(dplyr)
+for (i in unique(mydata$genotype)){
+#-----灭菌的
+datai<-mydata %>% dplyr::filter(genotype==i) 
+for (j in unique(mydata$treat)){
+dataiD<-datai %>% dplyr::filter(group=="DT") %>% dplyr::filter(treat==j)
+dataiD<-dataiD[order(dataiD$weight,decreasing = TRUE),]   #默认是从小到大，但是这里设置从大大小
+#N<-dim(dataiD)[1]
+#dataiD<-dataiD[-c(1:4,N-3,N-2,N-1,N),]
+dataiD<-dataiD[-c(1:4#,(dim(dataiD)[1]-2):(dim(dataiD)[1])
+                  ),]  #去除极端值
+dataiW<-datai %>% dplyr::filter(group=="WT") %>% dplyr::filter(treat==j)
+dataiW<-dataiW[order(dataiW$weight,decreasing = TRUE),]
+# MW<-dim(dataiD)[1]
+dataiW<-dataiW#[-c(1:2,(dim(dataiW)[1]-1):(dim(dataiW)[1])),]
+mean_Weight<-mean(dataiW$weight)
+S_lossi<-data.frame((dataiD$weight/mean_Weight)*100)
+colnames(S_lossi)[1]<-c("weight_ratio")
+S_lossi$genotype<-paste0(i)
+S_lossi$group<-paste0(j)
+weight_loss<-rbind(weight_loss,S_lossi)
+weight_loss
+}
+}
+weight_loss<- weight_loss #%>% filter(weight_ratio<100)
+
+data<-weight_loss
+#data$soil_type<-mydata$soil_type
+# 绘图数据
+datai<-data #%>% filter(treat==treati & var==vari)
+datai$genotype<-factor(datai$genotype,levels=g1)
+# var==vari
+vari<-"weight_ratio"
+colnames(datai)<-ifelse(colnames(datai)==vari,"value",colnames(datai))
+# 设置顺序
+datai$group<-factor(datai$group,levels = c("Sterilized","S_soil",
+                                           "Non-sterilized"))
+p0<-ggplot(datai,aes(group,value,group=group,color=group,fill=group))+
+  geom_bar(stat="summary",fun=mean,position="dodge")+ #绘制柱状图
+  stat_summary(geom = "errorbar",fun.data = 'mean_se', width = 0.3)+#误差棒
+  labs(x="Genotypes",y=vari)+#标题
+     geom_jitter(aes(colour=factor(group)#,
+                         #shape=factor(batch)
+                       ),
+        position = position_jitter(0.22),
+        #shape=21, 
+        size = 1.5,
+        alpha=0.9)+
+  theme_prism(#palette = "candy_bright",
+              base_fontface = "plain", # 字体样式，可选 bold, plain, italic
+              base_family = "serif", # 字体格式，可选 serif, sans, mono, Arial等
+              base_size = 16,  # 图形的字体大小
+              base_line_size = 0.8, # 坐标轴的粗细
+              axis_text_angle = 45) + # 可选值有 0，45，90，270
+scale_fill_manual(values=c("#FEF5D8","orange2"),guide=guide_legend(reverse = TRUE))+
+  facet_grid(~genotype,scales = 'free')
+# 简单两两比较
+p01<-p0+geom_signif(comparisons = list(
+  #c("Sterilized","S_soil"),
+  c("Sterilized","Non-sterilized")#,
+  #c("S_soil","Non-sterilized")
+  ),# 设置需要比较的组
+                   map_signif_level = T, #是否使用星号显示
+                   test = "t.test", ##计算方法
+                   y_position = c(80,85,90),#图中横线位置设置
+                   tip_length = c(c(0.01,0.01),
+                                  c(0.01,0.01),
+                                  c(0.01,0.01)),#横线下方的竖线设置
+                   size=0.8,color="black")+
+  labs(title = paste(unique(mydata$soil_type),"_NS_S_exp",sep="_"))
+p01
+
+```

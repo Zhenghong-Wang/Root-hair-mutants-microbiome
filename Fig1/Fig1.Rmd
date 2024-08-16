@@ -1,0 +1,246 @@
+---
+title: "Fig1"
+author: "ZH"
+date: "2024-08-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Fig. 1c
+```{r}
+# 加载必要的库
+library(ggsignif)
+library(ggpubr)
+library(dplyr)
+library(nparcomp)
+library(ggplot2)
+
+# 读取数据
+bardata <- read.table("root_hair_density.txt", header = TRUE)
+bardata
+#  计算显著性
+  fit <- aov(hairs ~ genotype, bardata)
+  print(TukeyHSD(fit))
+  stat_res2 <- LSD.test(fit, "genotype", p.adj = "bonferroni")
+  print(stat_res2)
+
+# 绘制柱状图并添加抖动散点
+pbar2 <- ggplot(bardata, aes(x = genotype, y = hairs)) +
+  coord_cartesian(ylim = c(0, 1.2 * max(abs(bardata$hairs)))) +  # 设置y轴坐标范围
+  stat_summary(aes(fill = genotype),
+               fun = mean, geom = "bar",
+               fun.args = list(mult = 1), width = 0.7) +  # 添加柱状图
+  stat_summary(aes(fill = genotype),
+               fun.data = mean_sdl, fun.args = list(mult = 1),
+               geom = "errorbar", width = 0.2) +  # 添加误差线
+  geom_jitter(aes(fill = genotype),  # 添加抖动散点
+              position = position_jitter(0.2),
+              shape = 21,
+              size = 2,
+              alpha = 0.7,
+              color = "black") +  # 这里确保散点的边框颜色为黑色
+  labs(x = "Genotype", y = "Root hair density (hairs/mm)") +  # 添加x，y轴名
+  scale_x_discrete(limits = c("rsl2rsl4", "Col-0", "gl2")) +
+  theme_classic() +
+  scale_fill_manual(values = rev(c("orange2","forestgreen", "steelblue3")))
+
+# 添加显著标记字母
+p <- pbar2 + 
+  annotate('text', label = 'c', x = 1, y = 1.2 * max(bardata2$hairs) + 0.05, size = 5) +
+  annotate('text', label = 'b', x = 2, y = 1.2 * max(bardata2$hairs) + 0.05, size = 5) +
+  annotate('text', label = 'a', x = 3, y = 1.2 * max(bardata2$hairs) + 0.05, size = 5)
+
+# 显示图形
+p
+
+```
+
+# Fig. 1e
+```{r}
+
+
+
+```
+
+# Fig. 
+```{r}
+# 加载必要的库
+library(ggsignif)
+library(ggpubr)
+library(dplyr)
+library(nparcomp)
+library(ggplot2)
+library(agricolae)
+# 读取数据
+bardata <- read.csv("RH_mutant_PRL_FW.csv", header = TRUE)
+bardata
+colnames(bardata)
+#  计算显著性--PRL
+  fit <- aov(shoot_weight ~ genotype, bardata)
+  print(TukeyHSD(fit))
+  stat_res2 <- LSD.test(fit, "genotype", p.adj = "bonferroni")
+  print(stat_res2)
+
+  # 绘制柱状图并添加抖动散点
+pbar2 <- ggplot(bardata, aes(x = genotype, 
+                             y = shoot_weight,
+                             fill=genotype)) +
+  coord_cartesian(ylim = c(0, 1.2 * max(abs(bardata$shoot_weight)))) +  # 设置y轴坐标范围
+  stat_summary(#aes(fill = genotype),
+               fun = mean, geom = "bar",
+               fun.args = list(mult = 1), width = 0.7) +  # 添加柱状图
+  stat_summary(#aes(fill = genotype),
+               fun.data = mean_sdl, fun.args = list(mult = 1),
+               geom = "errorbar", width = 0.2) +  # 添加误差线
+  #geom_jitter(#aes(fill = genotype),  # 添加抖动散点
+  #            position = position_jitter(0.2),
+  #            shape = 21,
+  #            size = 2,
+  #            alpha = 0.7,
+  #            color = "black") +  # 这里确保散点的边框颜色为黑色
+  labs(x = "Genotype", y = "Shoot fresh weight (mg)") +  # 添加x，y轴名
+  scale_x_discrete(limits = c("rsl2rsl4", "Col_0", "gl2")) +
+  theme_classic() +
+  scale_fill_manual(values = rev(c("orange2","forestgreen", "steelblue3")))
+
+# 添加显著标记字母
+pfw <- pbar2 + 
+  annotate('text', label = 'b', x = 1, y = 1.2 * max(bardata$shoot_weight) + 0.05, size = 5) +
+  annotate('text', label = 'a', x = 2, y = 1.2 * max(bardata$shoot_weight) + 0.05, size = 5) +
+  annotate('text', label = 'a', x = 3, y = 1.2 * max(bardata$shoot_weight) + 0.05, size = 5)
+
+# 显示图形
+pfw
+```
+# primary root length
+```{r}
+#  计算显著性--PRL
+  fit <- aov(primary_root_length ~ genotype, bardata)
+  print(TukeyHSD(fit))
+  stat_res2 <- LSD.test(fit, "genotype", p.adj = "bonferroni")
+  print(stat_res2)
+# 绘制柱状图并添加抖动散点
+pbar2 <- ggplot(bardata, aes(x = genotype, 
+                             y = primary_root_length,
+                             fill=genotype)) +
+  coord_cartesian(ylim = c(0, 1.2 * max(abs(bardata$primary_root_length)))) +  # 设置y轴坐标范围
+  stat_summary(#aes(fill = genotype),
+               fun = mean, geom = "bar",
+               fun.args = list(mult = 1), width = 0.7) +  # 添加柱状图
+  stat_summary(#aes(fill = genotype),
+               fun.data = mean_sdl, fun.args = list(mult = 1),
+               geom = "errorbar", width = 0.2) +  # 添加误差线
+  #geom_jitter(#aes(fill = genotype),  # 添加抖动散点
+  #            position = position_jitter(0.2),
+  #            shape = 21,
+  #            size = 2,
+  #            alpha = 0.7,
+  #            color = "black") +  # 这里确保散点的边框颜色为黑色
+  labs(x = "Genotype", y = "Primary root length (cm)") +  # 添加x，y轴名
+  scale_x_discrete(limits = c("rsl2rsl4", "Col_0", "gl2")) +
+  theme_classic() +
+  scale_fill_manual(values = rev(c("orange2","forestgreen", "steelblue3")))
+
+# 添加显著标记字母
+pprl <- pbar2 + 
+  annotate('text', label = 'a', x = 1, y = 1.2 * max(bardata$primary_root_length) + 0.05, size = 5) +
+  annotate('text', label = 'a', x = 2, y = 1.2 * max(bardata$primary_root_length) + 0.05, size = 5) +
+  annotate('text', label = 'a', x = 3, y = 1.2 * max(bardata$primary_root_length) + 0.05, size = 5)
+
+# 显示图形
+pprl
+```
+
+# lateral roots
+```{r}
+  #  计算显著性--lateral_roots
+  fit <- aov(lateral_roots ~ genotype, bardata)
+  print(TukeyHSD(fit))
+  stat_res2 <- LSD.test(fit, "genotype", p.adj = "bonferroni")
+  print(stat_res2)
+
+# 绘制柱状图并添加抖动散点
+bardata$lateral_roots_density<-paste0(bardata$lateral_roots/bardata$primary_root_length)
+pbar2 <- ggplot(bardata, aes(x = genotype, 
+                             y = lateral_roots,
+                             fill=genotype)) +
+  coord_cartesian(ylim = c(0, 1.2 * max(abs(bardata$lateral_roots)))) +  # 设置y轴坐标范围
+  stat_summary(#aes(fill = genotype),
+               fun = mean, geom = "bar",
+               fun.args = list(mult = 1), width = 0.7) +  # 添加柱状图
+  stat_summary(#aes(fill = genotype),
+               fun.data = mean_sdl, fun.args = list(mult = 1),
+               geom = "errorbar", width = 0.2) +  # 添加误差线
+  # geom_jitter(#aes(fill = genotype),  # 添加抖动散点
+  #             position = position_jitter(0.2),
+  #             shape = 21,
+  #             size = 2,
+  #             alpha = 0.7,
+  #             color = "black") +  # 这里确保散点的边框颜色为黑色
+  labs(x = "Genotype", y = "Lateral roots") +  # 添加x，y轴名
+  scale_x_discrete(limits = c("rsl2rsl4", "Col_0", "gl2")) +
+  theme_classic() +
+  scale_fill_manual(values = rev(c("orange2","forestgreen", "steelblue3")))
+
+# 添加显著标记字母
+pl <- pbar2 + 
+  annotate('text', label = 'a', x = 1, y = 1.2 * max(bardata$lateral_roots) + 0.05, size = 5) +
+  annotate('text', label = 'a', x = 2, y = 1.2 * max(bardata$lateral_roots) + 0.05, size = 5) +
+  annotate('text', label = 'a', x = 3, y = 1.2 * max(bardata$lateral_roots) + 0.05, size = 5)
+
+# 显示图形
+pl
+
+```
+
+# lateral root density
+```{r}
+bardata <- read.csv("RH_mutant_PRL_FW.csv", header = TRUE)
+bardata
+# 绘制柱状图并添加抖动散点
+bardata$lateral_roots_density<-as.numeric(round(bardata$lateral_roots/bardata$primary_root_length,2))
+bardata$genotype<-factor(bardata$genotype,levels=c("rsl2rsl4", "Col_0", "gl2"))
+  #  计算显著性--lateral_roots
+  fit <- aov(lateral_roots_density ~ genotype, bardata)
+  print(TukeyHSD(fit))
+  stat_res2 <- LSD.test(fit, "genotype", p.adj = "bonferroni")
+  print(stat_res2)
+
+pbar2 <- ggplot(bardata, aes(x = genotype, 
+                             y = lateral_roots_density,
+                             fill=genotype)) +
+  #coord_cartesian(ylim = c(0, 5)) +  # 设置y轴坐标范围
+  stat_summary(#aes(fill = genotype),
+               fun = mean, geom = "bar",
+               fun.args = list(mult = 1), width = 0.7) +  # 添加柱状图
+  stat_summary(#aes(fill = genotype),
+               fun.data = mean_sdl, fun.args = list(mult = 1),
+               geom = "errorbar", width = 0.2) +  # 添加误差线
+  #geom_jitter(#aes(fill = genotype),  # 添加抖动散点
+  #            position = position_jitter(0.2),
+  #            shape = 21,
+  #            size = 2,
+  #            alpha = 0.7,
+  #            color = "black") +  # 这里确保散点的边框颜色为黑色
+  labs(x = "Genotype", y = "Lateral roots density (counts/cm)") +  # 添加x，y轴名
+  scale_x_discrete(limits = c("rsl2rsl4", "Col_0", "gl2")) +
+  theme_classic() +
+  scale_fill_manual(values = c("orange2","forestgreen", "steelblue3"))
+
+# 添加显著标记字母
+pld <- pbar2 + 
+  annotate('text', label = 'a', x = 1, y = 3 + 0.05, size = 5) +
+  annotate('text', label = 'a', x = 2, y = 3 + 0.05, size = 5) +
+  annotate('text', label = 'a', x = 3, y = 3 + 0.05, size = 5)
+
+# 显示图形
+pld
+
+ggarrange(pfw,pprl,pl,pld,
+          ncol = 2,nrow=2,
+          labels = c("a","b","c","d"))
+
+```

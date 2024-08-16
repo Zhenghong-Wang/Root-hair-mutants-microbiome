@@ -1,0 +1,49 @@
+Genome,region,gene,gene2,start,end,strand,KO,orientation
+genome_4F10,Ocd,cobF,targ2,158240,159016,reverse,K02228,1
+genome_4F10,Ocd,,,159080,159916,reverse,,1
+genome_4F10,Ocd,fsr,targ3,160037,161233,forward,K08223,0
+genome_4F10,Ocd,dadA,targ4,161295,162545,reverse,K00285,1
+genome_4F10,Ocd,alr,targ5,162577,163710,reverse,K01775,1
+genome_4F10,Ocd,,,163835,164299,forward,,0
+genome_4F10,Ocd,,,164308,166134,reverse,,1
+genome_4F10,Ocd,gcvA,targ6,166384,167268,reverse,K03566,1
+genome_4F10,Ocd,,,167483,168823,forward,,0
+genome_4F10,Ocd,ocd,targ1,168889,169938,reverse,K01750,1
+genome_4F10,Ocd,,,170081,170518,forward,,0
+genome_4F10,Ocd,,,170571,170828,reverse,,1
+genome_4F10,Ocd,,,170996,171343,forward,,0
+genome_4F10,Ocd,hutC,targ7,171433,172188,reverse,K05836,1
+genome_4F10,Ocd,"occT, nocT",targ8,172382,173221,forward,K10018,0
+genome_4F10,Ocd,occQ,targ9,173323,174048,forward,K10020,0
+genome_4F10,Ocd,"occM, nocM",,174059,174763,forward,K10019,0
+genome_4F10,Ocd,"occP, nocP",,174786,175562,forward,K10021,0
+genome_4F10,Ocd,"hutH, HAL",,175559,177064,forward,K01745,0
+genome_4F10,proVWX,,,444473,445801,reverse,K00822,1
+genome_4F10,proVWX,hlyU,targ4,446155,446472,reverse,K22042,1
+genome_4F10,proVWX,"hutZ, hugZ",targ5,446844,447335,reverse,K07226,1
+genome_4F10,proVWX,proV,targ1,447372,448421,reverse,K02000,1
+genome_4F10,proVWX,proW,targ2,448418,449275,reverse,K02001,1
+genome_4F10,proVWX,proX,targ3,449446,450402,reverse,K02002,1
+genome_4F10,proVWX,tdk,targ6,450635,451216,forward,K00857,0
+genome_4F10,proVWX,CYC,targ7,451299,451685,forward,K08738,0
+genome_4F10,OpuE,tadA,targ4,841518,841976,forward,K11991,0
+genome_4F10,OpuE,,,842014,842643,reverse,,1
+genome_4F10,OpuE,"IARS, ileS",targ2,842877,845813,reverse,K01870,1
+genome_4F10,OpuE,OpuE,targ1,846113,847588,reverse,K03307,1
+genome_4F10,OpuE,,,847578,847775,reverse,,1
+genome_4F10,OpuE,narL,targ3,848044,848685,reverse,K07684,1
+genome_4F10,OpuE,,,848682,850058,reverse,K02480,1
+genome_4F10,speC_speF,bioB,targ2,151613,151771,reverse,K01012,1
+genome_4F10,speC_speF,dmdB,targ3,151783,153432,reverse,K20034,1
+genome_4F10,speC_speF,,,153647,154207,reverse,,1
+genome_4F10,speC_speF,"speC, speF",targ1,154230,156587,reverse,K01581,1
+genome_4F10,speC_speF,,,156797,157105,forward,,0
+genome_4F10,speC_speF,,,157293,159377,reverse,,1
+genome_4F10,speC_speF,flgE,targ4,159634,167532,reverse,K02390,1
+genome_4F10,PutA,ABC.MS.P,targ2,467049,467966,reverse,K02025,1
+genome_4F10,PutA,ABC.MS.S,targ3,468030,469271,reverse,K02027,1
+genome_4F10,PutA,galR,targ4,469312,470268,reverse,K02529,1
+genome_4F10,PutA,putA,targ1,470552,474256,reverse,K13821,1
+genome_4F10,PutA,lrp,targ5,474442,474903,forward,K03719,0
+genome_4F10,PutA,,,475047,475313,forward,,0
+genome_4F10,PutA,"praC,xylH",targ6,475362,475547,reverse,K01821,1

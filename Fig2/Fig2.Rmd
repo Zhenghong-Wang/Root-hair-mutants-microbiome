@@ -1,0 +1,193 @@
+---
+title: "Fig.2"
+author: "ZH"
+date: "2024-08-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Fig.2b
+```{r}
+source("groupPcoa.R")
+otutab<-read.csv("otutab.csv",header=TRUE,row.names = 1) 
+dim(otutab)
+group<-read.table("metadata.txt",header=TRUE,row.names = 1)
+dim(group)
+meta<-group 
+library(dplyr)
+plotmeta<-meta #%>% dplyr::filter(compartment=="Endosphere")
+index<-rownames(plotmeta)
+plotdata<-otutab[,index]
+plotmeta$betaGroup<-paste(plotmeta$group,plotmeta$compartment,plotmeta$genotype,sep="_")
+plotmeta$betaGroup<-gsub("Endosphere","En",plotmeta$betaGroup)
+plotmeta$betaGroup<-gsub("Rhizosphere","Rhi",plotmeta$betaGroup)
+plotmeta$betaGroup<-gsub("DT_Drought_soil_BS","DT_BS",plotmeta$betaGroup)
+plotmeta$betaGroup<-gsub("WT_Water_soil_BS","WT_BS",plotmeta$betaGroup)
+#调整顺序
+plotmeta$betaGroup<-factor(plotmeta$betaGroup,levels = c(
+     "DT_En_Col-0","DT_En_gl2-5","DT_En_rsl2rsl4",
+     "WT_En_Col-0","WT_En_gl2-5","WT_En_rsl2rsl4",
+     "DT_Rhi_Col-0","DT_Rhi_gl2-5","DT_Rhi_rsl2rsl4",
+     "WT_Rhi_Col-0","WT_Rhi_gl2-5","WT_Rhi_rsl2rsl4",
+     "DT_BS","WT_BS"
+))
+
+# compartment  2   5.7095 0.31185 21.3300  0.001 ***
+# genotype     2   0.6012 0.03284  2.2461  0.017 *  
+# group        1   0.5711 0.03119  4.2669  0.004 ** 
+
+library(ggpubr)
+pcoa<-groupPcoa(plotdata,
+                plotmeta,
+                cg="betaGroup",
+                sg="betaGroup",
+                title=paste("RH",unique(plotmeta$group),
+                unique(plotmeta$compartment),sep = "_"),
+                ellipse=FALSE,
+                text_name = FALSE,
+                point_size = 2)
+p<-pcoa[[3]]+
+  scale_shape_manual(values=c(16,16,16,
+                                      1,1,1,
+                                      17,17,17,
+                                      2,2,2,
+                                      22,10),
+                             guide = guide_legend(reverse=TRUE))+
+          scale_color_manual(values=c("forestgreen","steelblue3","orange2",
+                                      "forestgreen","steelblue3","orange2",
+                                      "forestgreen","steelblue3","orange2",
+                                      "forestgreen","steelblue3","orange2",
+                                      "brown2","skyblue"),
+                             guide = guide_legend(reverse=TRUE))
+p
+```
+
+#Fig.2c,d
+```{r}
+today<-Sys.Date()
+prefix<-c("RH")
+#不同筛选尺度的betaNTI值
+sj<-read.table("otu_betaNTI.txt",header = TRUE)
+meta<-read.table("metadata_sto_deter_Net.txt",header=TRUE)
+sj$sampleID=sj$variable
+sj_plot<-merge(sj,meta,by="sampleID")
+library(allparametertest)
+cbk<-summarySE(sj_plot,measurevar="value",groupvars="bNTIgroup",na.rm=TRUE)
+index<-sj_plot 
+index$genotype<-factor(index$genotype,levels = c("Col-0","gl2","rsl2rsl4"))
+library(ggplot2)
+index$value<-as.numeric(index$value)
+index$compartment<-ifelse(index$compartment=="Rhi","Rhizosphere",index$compartment)
+index$compartment<-ifelse(index$compartment=="En","Endosphere",index$compartment)
+index$group<-ifelse(index$group=="DT","Drought",index$group)
+index$group<-ifelse(index$group=="WT","Water",index$group)
+index$compartment<-factor(index$compartment,levels=c("Rhizosphere","Endosphere"))
+index$group<-factor(index$group,levels=c("Water","Drought"))
+p<-ggplot(index, aes(x=genotype, y=value, group=genotype,color=genotype)) +
+  coord_cartesian(ylim = c(1.2*min(index$value),1.2*max(index$value)))+
+  geom_boxplot(alpha=1, outlier.size=0, size=0.5, width=0.7, fill="transparent") +
+  geom_jitter( position=position_jitter(0.17), size=1, alpha=0.7)+
+  scale_color_manual(values=c("orange2","forestgreen","steelblue3"))+
+  geom_segment(aes(x = unique(index$genotype)[1], y = 2, xend =unique(index$genotype)[length(unique(index$genotype))], yend =2),color="black",size=0.3,linetype="dashed") +
+  geom_segment(aes(x = unique(index$genotype)[1], y = -2, xend =unique(index$genotype)[length(unique(index$genotype))], yend =-2),color="black",size=0.3,linetype="dashed") +
+  labs(title = paste0(prefix,"_otu_betaNTI"),
+       x = "Genotype", y = "βNTI") +
+  facet_grid(group~compartment)  +
+  theme_bw()+
+  scale_x_discrete(limits=c("rsl2rsl4","Col-0","gl2"))
+p
+
+#显著性比较
+p+geom_signif(comparisons =list(
+                  c("Col-0","rsl2rsl4"),
+                  c("Col-0","gl2")),# 设置需要比较的组
+                   map_signif_level = TRUE, #是否使用星号显示
+                   test = "t.test", ##计算方法
+                   y_position = c(0,0.1),#图中横线位置设置
+
+                   tip_length = c(c(0.01,0.01),
+                                  c(0.01,0.01),
+                                  c(0.01,0.01)), #横线下方的竖线设置
+                    textsize=4.0,#文本大小
+                    vjust = 0.6,   # 值越大标记与横线距离越短
+                   extend_line=0.05,
+                   size=0.8,color="black")+
+  labs(title = paste("RH_NTI"))
+```
+
+
+# Fig.2d
+```{r}
+comb<-read.table("otu_RCbray_metaInformation.txt",header = TRUE)
+#comb<-comb[-c(grep("_1_",comb$sample),grep("_1_",comb$variable)),]
+processId<-factor(c("Heterogeneous_selection","Homogeneous_selection","Homogenizing_dispersal","Dispersal_limitation","Drift"),ordered = TRUE)
+comb$freq <- 1
+plotdata0<-comb
+library(Biobase)
+plotData<-data.frame()
+for (i in unique(plotdata0$group)){
+  for (j in unique(plotdata0$compartment)){
+    for (k in unique(plotdata0$bNTIgroup)){
+        dataijk<-data.frame(plotdata0[which(plotdata0$group==i & plotdata0$compartment==j & plotdata0$bNTIgroup==k),])
+        dataijk<-dataijk[,c("processRcbray","group","genotype","compartment","bNTIgroup","freq")]
+        for (x in unique(processId)) {
+          if (x %in% unique(dataijk$processRcbray)) {
+          dataijkx<-dataijk[which(dataijk$processRcbray==x),]
+          dataijkx2<-aggregate(dataijkx[,c("freq")],by=list(dataijkx$processRcbray),FUN=sum)
+          percent<-dataijkx2$x/10
+          dataing<-cbind(i,j,k,x,percent)
+          colnames(dataing)<-c("group","compartment","bNTIgroup","process","percent")
+          plotData<-rbind(plotData,dataing)
+          }
+        }
+    }
+  }
+}
+#write.csv(plotData,"20230213_RH_001_otu_bNTI_RCbray_metaInformation_plotData.csv",row.names = TRUE)
+#修改一下信息，仔细检查 啊！！！！！！！
+meta<-read.table("metadata_sto_deter_Net.txt",header=TRUE)
+meta2<-meta %>% select("bNTIgroup","genotype")
+meta2<-meta2[!duplicated(meta2),]
+plotData<-data.frame(merge(plotData,meta2,by="bNTIgroup"))
+plotData$genotype<-factor(plotData$genotype,levels = c("Col-0","gl2","rsl2rsl4"))
+plotData$process<-gsub("_"," ",plotData$process)
+#plotData$process<-factor(unique(plotData$process),levels=c("Homogeneous selection","Dispersal limitation","Homogenizing dispersal","Drift"))
+#plotData$process<-gsub("Heterogeneous selection","Variable selection")
+plotData$compartment<-gsub("Rhi","Rhizosphere",plotData$compartment)
+plotData$compartment<-gsub("En","Endosphere",plotData$compartment)
+plotData$compartment<-factor(plotData$compartment,levels = c("Rhizosphere","Endosphere"))
+plotData$percent<-as.numeric(plotData$percent)
+plotData$group<-gsub("DT","Drought",plotData$group)
+plotData$group<-gsub("WT","Water",plotData$group)
+plotData$genotype<-factor(plotData$genotype,levels = c("rsl2rsl4","Col-0","gl2"))
+
+#--绘图
+library(ggplot2)
+plotData$process<-factor(plotData$process,levels=c("Homogeneous selection","Dispersal limitation","Homogenizing dispersal","Drift"))
+plotData$genotype
+p = ggplot(plotData, aes(x=genotype, y = percent, fill = process )) +
+      #geom_bar(stat = "identity", width=1)+    #   绝对丰度
+      geom_bar(stat = "identity",position="fill", width=0.8)+ #   相对丰度
+      scale_y_continuous(labels = scales::percent) + #
+      scale_fill_manual(values = c("skyblue1","deeppink1","burlywood1","springgreen3","grey60"))+
+      #facet_grid( ~ variable, scales = "free_x", switch = "x") +  theme(strip.background = element_blank())+
+      #theme(axis.ticks.x = element_blank(), axis.text.x = element_blank())+
+      # labs(title = paste0("Relative abundance at phylum level (",design$group),")")+
+      labs(title=paste0(prefix,"_001_otu_betaNTI_RCbray.pdf"))+
+      xlab("")+ylab("Assembly process (%)")+ #   绝对
+      #xlab("Groups")+ylab("Percentage (%)")+    #   相对
+      theme_classic()+mytheme+#图例位置，指定与否默认右侧，不要:none
+      facet_grid(group~compartment)
+(plot_name<-paste0(Sys.Date(),prefix,"betaNTI_RCbray.pdf"))
+ggplot2::ggsave(plot_name,p,device = "pdf",width=5.0,height=3.8)
+p
+
+```
+
+```{r}
+
+
+```

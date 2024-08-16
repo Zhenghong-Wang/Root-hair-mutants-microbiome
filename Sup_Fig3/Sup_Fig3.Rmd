@@ -1,0 +1,49 @@
+---
+title: "sup_fig3"
+author: "ZH"
+date: "2024-08-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#sup_fig3
+```{r}
+# 加载必要的库
+library(dplyr)
+library(allparametertest)
+library(ggplot2)
+library(ggalt)
+
+# 读取数据
+data <- read.table("soil_water_content.txt", header = TRUE)
+
+# 计算总结统计
+mon_swc <- summarySE(data, measurevar = "water_content", groupvars = c("date", "genotype", "treat"), na.rm = TRUE)
+
+# 设置分组和因子水平
+mon_swc <- mon_swc %>%
+  mutate(group = factor(paste0(treat, "_", genotype),
+                        levels = c("control_rsl2rsl4", "control_Col-0", "control_gl2",
+                                   "drought_rsl2rsl4", "drought_Col-0", "drought_gl2")))
+
+# 绘图
+p2 <- ggplot(mon_swc, aes(x = date, y = water_content * 100, group = group, colour = group, shape = group)) +
+  coord_cartesian(ylim = c(0, 100)) + # 设置 y 轴坐标范围
+  geom_point(size = 3.5) +
+  geom_line(size = 0.3) +   # 线图
+  geom_smooth(method = "loess", se = FALSE) +
+  scale_shape_manual(values = c(16, 16, 16, 17, 17, 17), guide = guide_legend(reverse = TRUE)) +
+  scale_color_manual(values = c("orange2", "steelblue3", "forestgreen", "orange2", "steelblue3", "forestgreen"),
+                     guide = guide_legend(reverse = TRUE)) +
+  geom_segment(aes(x = "11_11", y = 0, xend = "11_11", yend = 25), color = "black", size = 0.05, linetype = "dashed") +  # 长期干旱取样点
+  geom_errorbar(aes(x = date, ymin = (water_content - se) * 100, ymax = (water_content + se) * 100), width = 0.1, size = 0.2) +  # 误差线
+  labs(title = "", x = "Time point", y = "Gravimetric water content (%) of soil") +
+  theme_classic() +
+  scale_x_discrete(limits = c("11_01", "11_03", "11_05", "11_07", "11_09", "11_11"))
+
+p2
+
+```

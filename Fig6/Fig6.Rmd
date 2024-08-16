@@ -1,0 +1,249 @@
+---
+title: "Fig6"
+author: "ZH"
+date: "2024-08-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Fig.6a
+```{r}
+# 加载必要的库
+library(ggplot2)
+library(gggenes)
+library(dplyr)
+
+# 读取数据
+example_genes <- read.csv("Genome_4F10_gene_position.csv", header = TRUE)
+
+# 画几个区域
+reg <- c("Ocd", "proVWX", "OpuE", "speC_speF", "PutA")
+regi <- reg[1]
+filtered_genes <- example_genes %>% filter(region == regi)
+
+# 绘图函数
+plot_gene_positions <- function(data, fill_var) {
+  ggplot(data, aes(xmin = start, xmax = end, y = Genome, forward = orientation, fill = !!sym(fill_var), label = gene)) +
+    geom_gene_arrow() +
+    geom_gene_label() +
+    facet_wrap(~ region, scales = "free", ncol = 1) +
+    scale_fill_brewer(palette = "Paired")
+}
+
+# 绘制两个图形
+p <- plot_gene_positions(filtered_genes, "gene2")
+p
+
+
+```
+
+# Fig.6d
+```{r}
+# 加载必要的库
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(ggprism)
+library(ggsignif)
+
+# 读取数据
+data <- read.csv("PEG_4F10_PRL_freshweight.csv", header = TRUE) %>%
+  drop_na() %>%
+  mutate(PRL = as.numeric(PRL),
+         treat = factor(treat, levels = c("buffer", "WT_4F10", "ocd_4F10")))
+
+# 绘图函数
+create_plot <- function(data) {
+  ggplot(data, aes(treat, PRL, color = treat, fill = treat)) +
+    geom_bar(stat = "summary", fun = mean, position = "dodge") +
+    stat_summary(geom = "errorbar", fun.data = 'mean_se', width = 0.3) +
+    labs(x = "Inoculation", y = "Primary root length (mm)") +
+    theme_prism(base_fontface = "plain", base_family = "serif", base_size = 16, base_line_size = 0.8, axis_text_angle = 45) +
+    scale_fill_manual(values = c("grey98", "#E69F00", "#56B4E9"), guide = guide_legend(reverse = TRUE)) +
+    facet_grid(~group, scales = 'free')
+}
+
+# 添加统计显著性
+add_significance <- function(plot) {
+  plot + geom_signif(comparisons = list(c("buffer", "WT_4F10"), c("WT_4F10", "ocd_4F10"), c("buffer", "ocd_4F10")),
+                     map_signif_level = TRUE, test = "t.test", y_position = c(9, 9.2, 9.5),
+                     vjust = 0.5, extend_line = 0.05, size = 0.8, color = "black") +
+    labs(title = "4F10_vs_ocd_4F10") +
+    theme_classic()
+}
+
+# 创建初始图形
+p0 <- create_plot(data)
+
+# 添加显著性标记
+p01 <- add_significance(p0)
+
+# 打印最终图形
+p01
+
+
+```
+# Fig.6e
+```{r}
+# 读取数据
+data <- read.csv("PEG_4F10_PRL_freshweight.csv", header = TRUE) %>%
+  drop_na() %>%
+  mutate(freshweight = as.numeric(freshweight),
+         treat = factor(treat, levels = c("buffer", "WT_4F10", "ocd_4F10")))
+
+# 绘图函数
+create_plot <- function(data) {
+  ggplot(data, aes(treat, freshweight, color = treat, fill = treat)) +
+    geom_bar(stat = "summary", fun = mean, position = "dodge") +
+    stat_summary(geom = "errorbar", fun.data = 'mean_se', width = 0.3) +
+    labs(x = "Inoculation", y = "Primary root length (mm)") +
+    theme_prism(base_fontface = "plain", base_family = "serif", base_size = 16, base_line_size = 0.8, axis_text_angle = 45) +
+    scale_fill_manual(values = c("grey98", "#E69F00", "#56B4E9"), guide = guide_legend(reverse = TRUE)) +
+    facet_grid(~group, scales = 'free')
+}
+
+# 添加统计显著性
+add_significance <- function(plot) {
+  plot + geom_signif(comparisons = list(c("buffer", "WT_4F10"), c("WT_4F10", "ocd_4F10"), c("buffer", "ocd_4F10")),
+                     map_signif_level = TRUE, test = "t.test", y_position = c(90, 92, 95),
+                     vjust = 0.5, extend_line = 0.05, size = 0.8, color = "black") +
+    labs(title = "4F10_vs_ocd_4F10") +
+    theme_classic()
+}
+p0 <- create_plot(data)
+# 添加显著性标记
+p01 <- add_significance(p0)
+p01
+
+
+```
+# Fig. 6f
+```{r}
+library(magrittr)   # For %>%
+data<-read.table("ocd_growthrate.txt",header=TRUE)
+library(allparametertest)
+data2<-data #%>% filter(genotype=="Col-0" & !treat=="rewater")
+sum<-summarySE(data2,measurevar="growth_rate",groupvars=c("strain","time"),na.rm=TRUE)
+#dt<-sum %>% dplyr::select(strain,time,growth_rate,se) %>% mutate(mean=growth_rate) %>% dplyr::select(!growth_rate)
+data<-sum
+data$time<-factor(data$time,levels = c("4h","8h","12h","24h"))
+data$strain<-factor(data$strain,levels = c("ocd_4F10","4F10"))
+
+#  绘图
+p2<-ggplot(data,aes(x=time,y=growth_rate,
+                    group=strain,
+                    shape=strain,
+                    colour=strain))+
+  geom_point(size=1.0)+
+  geom_line()+   #此行代码不能与——geom_xspline() 联用
+  scale_shape_manual(values=c(16,16),
+                             guide = guide_legend(reverse=TRUE))+
+          scale_color_manual(values=c("#04ae54","#70A5D9"),
+                             guide = guide_legend(reverse=TRUE))+
+  geom_errorbar(aes(x=time,ymin=growth_rate-sd,ymax=growth_rate+sd),#添加误差线
+                width=0.05,#color='black',#position=position_dodge(0.5),#设置误差线颜色，宽度等#设置误差线颜色，宽度等
+                size=0.2)+
+  labs(x="Genotypes",y="  Growth rate (%)")+ #标题
+  theme_classic()
+p2
+
+#  显著性看看
+data<-read.table("ocd_growthrate.txt",header=TRUE)
+list<-list(c("ocd_4F10","4F10"))
+for (i in unique(data$time)){
+  for (x in 1:length(list)){
+    dataix<-data %>% dplyr::filter(time==i & strain %in% c(list[[x]][1],list[[x]][2]))
+    test<-t.test(growth_rate~strain,dataix)
+    print(paste(i,list[[x]][1],list[[x]][2],"t.test",test$p.value,sep = " "))
+  }
+}
+
+
+```
+
+# Fig.6h
+```{r}
+data<-read.csv("data_ROS.csv",header = TRUE)
+library(tidyr)
+data<-data %>% drop_na()
+data$rate<-as.numeric(data$rate)
+data$name<-paste(data$strain,data$group,data$batch,sep="_")
+data0<-data.frame()
+library(dplyr)
+for (i in unique(data$name)){
+  data0i<-data %>% dplyr::filter(name==i) %>% dplyr::arrange(desc(rate))
+  data0i<-data0i[c(-1,-6),]
+  data0<-rbind(data0,data0i)
+}
+data<-data0
+data$treat<-data$strain
+data$index<-data$rate
+index<-"Survival rate (%)"
+# 绘图加
+data$treat<-factor(data$treat,levels = c("4F10","ocd_4F10"))
+p0<-ggplot(data,aes(treat,rate,
+                     fill=treat))+
+  geom_bar(stat="summary",fun=mean,position="dodge")+ #绘制柱状图
+  stat_summary(geom = "errorbar",fun.data = 'mean_se', width = 0.3)+#误差棒
+  labs(x="Inoculation",y=paste0(index))+#标题DATA
+   geom_jitter(aes(colour=factor(treat),
+                         shape=factor(batch)
+                       ),
+       position = position_jitter(0.22),
+        size = 1.5,
+        alpha=0.9)+
+  theme_prism(
+              base_fontface = "plain", # 字体样式，可选 bold, plain, italic
+              base_family = "serif", # 字体格式，可选 serif, sans, mono, Arial等
+              base_size = 16,  # 图形的字体大小
+              base_line_size = 0.8, # 坐标轴的粗细
+              axis_text_angle = 45) + # 可选值有 0，45，90，270
+  scale_fill_manual(values=c(
+                             "#E69F00", "#56B4E9"),
+                             guide = guide_legend(reverse=TRUE))+  # 使用自定义的色板
+  facet_grid(~group,scales = 'free')
+# 简单两两比较
+p01<-p0+geom_signif(comparisons = list(
+  c("4F10","ocd_4F10")#,
+  ),# 设置需要比较的组
+                   map_signif_level = T, #是否使用星号显示
+                   test = "wilcox.test", ##计算方法
+                   y_position = c(0.5),#图中横线位置设置
+                   vjust = 0.5,   # 值越大标记与横线距离越短
+                   extend_line=0.05,
+                   size=0.8,color="black")+
+  labs(title = paste("4F10_vs_ocd_4F10"))
+
+p01<-p01+ theme_classic()
+p01
+
+
+```
+
+
+
+
+
+```{r}
+mytheme<- theme(
+    plot.title  = element_text(color = "black", size   = 10, hjust = 0.5),  #主标题样式
+    #plot.subtitle = element_text(color = "black", size   = 8,hjust = 0.5),  #副标题样式
+    text=element_text(size=10,face="plain"),
+    axis.title=element_text(size=8,face="plain",color="black"),   #轴标题样式
+    axis.text = element_text(size=8,face="plain",color="black"),  #轴刻度样式
+    axis.text.x = element_text(colour = "black",angle = 0),
+    legend.title = element_text(size=6,face="plain",color="black"), #图例标题
+    legend.text = element_text(size=6,face="plain",color="black"),  #图例样式
+    legend.background = element_blank(),                            #图例背景
+    legend.position="right",                             #图例位置，指定与否默认右侧，不要:none
+    axis.line.y = element_line(color = "black", linetype = "solid",linewidth=0.2), # y轴线特征
+    axis.line.x = element_line (color = "black",linetype = "solid",linewidth=0.2), # x轴线特征
+    panel.grid.major =element_blank(), panel.grid.minor = element_blank(),# 去除任何网格和背景
+    panel.border = element_rect(linetype = "solid", size = 0.2,fill = NA))
+
+```
+
+
