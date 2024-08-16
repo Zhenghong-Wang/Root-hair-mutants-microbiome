@@ -1,0 +1,597 @@
+---
+title: "Fig3"
+author: "ZH"
+date: "2024-08-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Fig. 3a
+```{r}
+library(dplyr)
+library(reshape)
+library(ggplot2)
+
+# 定义参数和输入文件路径
+prefix <- "RH"
+otutab <- read.csv("otutab.csv", header = TRUE, row.names = 1)
+design <- read.table("metadata.txt", header = TRUE, row.names = 1)
+
+# 样本分组设计
+design <- design %>%
+  mutate(
+    bargroup = paste0(group, "_", compartment, "_", genotype) %>%
+      gsub("-", "_", .) %>%
+      gsub("Endosphere", "En", .) %>%
+      gsub("Rhizosphere", "Rhi", .) %>%
+      gsub("DT_Drought_soil_BS", "DT_BS", .) %>%
+      gsub("WT_Water_soil_BS", "WT_BS", .),
+    betaGroup = factor(bargroup, levels = c(
+      "WT_BS", "DT_BS",
+      "WT_Rhi_rsl2rsl4", "WT_Rhi_Col_0", "WT_Rhi_gl2", 
+      "DT_Rhi_rsl2rsl4", "DT_Rhi_Col_0", "DT_Rhi_gl2", 
+      "WT_En_rsl2rsl4", "WT_En_Col_0", "WT_En_gl2", 
+      "DT_En_rsl2rsl4", "DT_En_Col_0", "DT_En_gl2"
+    ))
+  )
+design<-design[grep("DT_En",design$betaGroup),]
+otutab<-otutab[,rownames(design)]
+# 读取分类信息并过滤
+tax <- read.table("taxonomy.txt", header = TRUE, row.names = 1) %>%
+  filter(rownames(.) %in% rownames(otutab))
+
+# 验证数据维度是否一致
+(dim(tax)[1] == dim(otutab)[1])
+(dim(design)[1] == dim(otutab)[2])
+
+# 色板
+palette20 <- c(
+  "#E4908D", "#C79DC9", "#FFDE18", "#D3F0F2", "#FAE2C1", "#A7F2B2", "#AFC7E8", "#EDB31E", 
+  "#A7AA36", "#477DAB", "#E84D94", "#9BD2EB", "#27B2AF", "#9271B1", "#F0868C", "#6BBC47", 
+  "#FDEA9C", "#04ae54", "#C5DC89", "#3583B8"
+)
+
+# 建立数据集
+dataset <- microtable$new(otu_table = otutab, tax_table = tax, sample_table = design)
+
+# 分组信息
+taxlevel <- "Family" 
+facet <- "betaGroup"    
+Nt <- 10    
+t1 = trans_diff$new(dataset = dataset, 
+                    method = "lefse",             #方法选择随机森林
+                    group = "betaGroup",        #判别分组
+                    p_adjust_method = "none",
+                    taxa_level = "Family")  #
+# 查看分析结果
+head(t1$res_diff)
+     #write.table(t1$res_diff,paste0(pa,x,"_",j,"_RandomForest_res_diff.txt"),sep = "\t",row.names = TRUE)
+#t1$res_diff
+# 展示前20的特征
+N<-dim(t1$res_diff)[1]
+
+
+```
+
+#fig.3b
+```{r}
+
+
+```
+
+# Fig.3c，d
+```{r}
+source("/Users/zhenghongwang/Desktop/EasyAmplicon/my_function/manhattanPlot.R")
+data<-read.csv("2023-09-09_percent_abundance_based_RH_all__all_compare_at_Species.csv",header=TRUE)  
+#其他数据制作
+otutab<-read.csv("RH_otutab_202301_F.csv",header=TRUE)  
+#物种分类信息
+tax<-read.table("RH_taxonomy_202301_F.txt",header=TRUE)
+#样本分组设计
+group<-read.table("RH_metadata_202301_1.txt",header=TRUE,row.names = 1)
+group<-group[-c(grep("_1_",rownames(group))),]
+
+#多组设置循环
+treat<-c("DT"#,
+         #"WT"
+         )
+comp<-c(#"Rhizosphere",
+        "Endosphere")
+geneID<-c("gl2-5"#,
+          #"rsl2rsl4"
+          )
+taxlevel<-c(#"Phylum"#,
+         #"Order",
+         "Family"#,
+         #"Genus"
+         )
+
+for (i in treat){
+  for (j in comp){
+    for (k in geneID){
+      for (x in taxlevel){
+        print(paste0(i,j,k,x))
+      }
+    }
+  }
+}
+        #根内topN
+        group2<-group %>% dplyr::filter(compartment=="Endosphere")
+        data2<-otutab[,c("ASVID",rownames(group2))]
+        id<-data2$ASVID
+        tax2<-tax %>% dplyr::filter(ASVID %in% id)
+        ##输入文件整理(只设定根际topN和根内topN)
+        if (j=="Endosphere"){
+          dataN<-data2
+          taxN<-tax2
+        }
+        #计算分类级topN及其顺序
+        topN<-20
+        tax_sum<-taxSum(dataN,taxN,level=x,topN=topN)
+        #初始文件整理
+       groupijk<-group %>% dplyr::filter(group==i & compartment==j) %>% dplyr::filter(genotype==k|genotype=="Col-0")
+       dataijk<-otutab[,c("ASVID",rownames(groupijk))]
+       id<-dataijk$ASVID
+       taxijk<-tax %>% dplyr::filter(ASVID %in% id)
+       dim(dataijk)
+       rownames(dataijk)<-dataijk$ASVID
+       dataijk<-dataijk[,-1]
+       dataijk2<-data.frame((t(t(dataijk)/colSums(dataijk)))*100)
+       dataijk2$RA<-rowSums(dataijk2)/dim(dataijk2)#计算特定组分，处理，基因型下的物种的平均相对丰度
+       dataijk2$ASVID<-rownames(dataijk2)   #设置ASVID值
+       
+       #输入文件整理
+       plotdata<-data %>% dplyr::filter(group==paste0(i,"_",j) & compare==paste0(k,"_VS_","Col-0") & !basemean==0)
+       dataijk3<-dataijk2 %>% dplyr::filter(ASVID %in% plotdata$ASVID)
+       dataijk3<-dataijk3[,c("ASVID","RA")]   #
+       plotdata<-merge(plotdata,dataijk3,by="ASVID")  #在绘图文件中添加组间平均相对丰度RA
+       #plotdata$RA
+       plotdata$tax<-plotdata[,x]   #设定tax分类级作为着色的列
+       #设置绘图数据的行排布顺序
+       plotdata$tax<-gsub("o_Burkholderiales|f_Unclassified","Burkholderiales_Unclassified",plotdata$tax)
+       plotdata$level<-ifelse(plotdata$level=="Enriched_in_rsl2rsl4"|plotdata$level=="Enriched_in_gl2-5",paste0("Enriched"),plotdata$level)
+       plotdata$level<-ifelse(plotdata$level=="Enriched_in_Col-0",paste0("Depleted"),plotdata$level)
+       plotdata$level<-ifelse(plotdata$level=="Non_Significant",paste0("NonSig"),plotdata$level)
+       plotdata$level<-factor(plotdata$level,levels=c("Enriched",   #rsl2rsl4只有两个水平，所以没有enrich
+                                                  "Depleted",
+                                                  "NonSig"))
+       data<-plotdata
+       taxlevel=x
+       topN=topN
+       NS=FALSE
+       size="weighted"
+       title=paste(i,j,x,k,"VS","Col-0",sep="_")
+       
+        if (NS==TRUE){
+    data<-data[-which(data$level=="NonSig"),]
+  } 
+  if (NS==FALSE){
+    data<-data
+  }
+  dim(data)
+  
+  #data轴着色等级及其丰度等文件
+  top_tax=factor(head(rownames(tax_sum),n=dim(tax_sum)[1]),ordered = TRUE)#99%   per行名为 具体分类等级下的名字，列为数量
+  top_tax<-factor(top_tax,ordered = TRUE)
+  
+  #自己设定主要展示的分类级，其他的变为Others
+  data$tax=data[,taxlevel]
+  data$tax<-ifelse(data$tax %in% top_tax,data$tax,paste0("Others"))
+  
+  #按指定顺序排列所选水平顺序(这里默认顺序是从打大小)
+  data_ing<-data.frame()
+  for (t in 1:length(top_tax)){
+    dataT<-data %>% dplyr::filter(tax==top_tax[t])
+    data_ing<-rbind(data_ing,dataT)
+  }
+  data<-data_ing
+  data$num=1:dim(data)[1]## 设置节点的顺序
+  
+  #Claculatelabemedian 标签位置确定
+  temp=data[c(data$tax %in% top_tax),c("tax","num")]
+  mat_mean=aggregate(temp[,-1],by=temp[1],FUN=median)  #median  计算节点位置中位数，便于X轴刻度标签位置
+  
+  ###由于data轴为分类水平-门-的标签，属于分类变量，非连续性，如果直接画，同一门类将呈一条重合线，很难看。
+  #因此，需要将这种分类排列转化为连续性排列
+  #NegtivelogPvalueformanhattan
+  data$neglogp=-log10(data$FDR)
+  data$otu=data$ASVID
+  #data=arrange(data,Kindom,Phylum,Class,Order,Family,Genus,Species)
+  data$otu=factor(data$otu,levels=data$otu)#setxorder
+  
+  #Setmaxneglogp    设置y轴最大值上限，不要过大
+  if(max(data$neglogp)>20){
+    data[data$neglogp>20,]$neglogp=20
+  } 
+  #设置最底下的-log10的分界线，以显著的最低的值-logpvalue的为基准线
+  dat2<-data %>% dplyr::filter(!level=="NonSig")
+  
+  #theme：
+  mytheme<- theme(
+  plot.title  = element_text(color = "black", size   = 8, hjust = 0.5),  #主标题样式
+  #plot.subtitle = element_text(color = "black", size   = 8,hjust = 0.5),  #副标题样式
+  text=element_text(size=10,face="bold"),
+  axis.title=element_text(size=12,face="bold",color="black"),   #轴标题样式
+  axis.text = element_text(size=10,face="bold",color="black"),  #轴刻度样式
+  axis.text.x = element_text(colour = "black",angle = 90), 
+  legend.title = element_text(size=10,face="bold",color="black"), #图例标题
+  legend.text = element_text(size=10,face="bold",color="black"),  #图例样式
+  legend.background = element_blank(),                            #图例背景
+  legend.position="right",                             #图例位置，指定与否默认右侧，不要:none
+  axis.line.y = element_line(color = "black", linetype = "solid",size=0.2), # y轴线特征
+  axis.line.x = element_line (color = "black",linetype = "solid",size=0.2), # x轴线特征
+  panel.grid.major =element_blank(), panel.grid.minor = element_blank(),# 去除任何网格和背景   
+  panel.border = element_rect( size = 0.2,fill = NA))
+  
+  ###全图
+  platte<-c("darkcyan","yellow","green","purple3","red",
+                      "pink","brown4","darkseagreen3","palegreen2","olivedrab1",
+                      "magenta2","brown3","tomato1","cyan1","violetred3",
+ "hotpink2","steelblue3","lightskyblue2","forestgreen","gray50")
+                      
+  #固定分组和ASVID
+   data$tax<-factor(data$tax,levels=c("Oxalobacteraceae" 
+                                              ,"Xanthobacteraceae" 
+                                              ,"Comamonadaceae"
+                                              ,"Azospirillaceae"
+                                              ,"Rhizobiaceae"
+                                              ,"Caulobacteraceae"
+                                              ,"Flavobacteriaceae"
+                                              ,"Devosiaceae"
+                                              ,"Pseudomonadaceae"
+                                              ,"Sphingomonadaceae"
+                                              ,"Chitinophagaceae"
+                                              ,"Microscillaceae"
+                                              ,"Xanthomonadaceae" 
+                                              ,"Streptomycetaceae"
+                                              ,"Bacillaceae"
+                                              ,"Micromonosporaceae"
+                                              ,"o_Burkholderiales|f_Unclassified"
+                                              ,"Rubritaleaceae"
+                                              ,"Methylophilaceae"
+                                              ,"Others"))
+  data<-arrange(data,tax)   #根据之前初画的mahatan图的顺序，调整分类的紧密程度
+  data$ASVID<-factor(data$ASVID,levels=data$ASVID)   #根据调整好的顺序，固定ASV的顺序
+  
+  #刘永鑫老师函数：调整间隔
+  getBreak<-function(x,y){
+    freq<-as.vector(table(y)) #table()计算频数
+    half_freq<-freq%/%2
+    for (i in seq(2,length(freq))){
+      new_num<-freq[i]+freq[i-1]
+      freq[i]=new_num}
+    pos<-freq-half_freq
+    break_point<-as.vector(x[pos])
+    return(break_point)
+  }
+  
+  gtext<-data %>% dplyr::filter(!level=="NonSig")   #标记ASVID的列表，可以自定义设置
+  
+   library(ggrepel)
+  p = ggplot(data,aes(x=ASVID,
+                    y=neglogp,
+                    color=tax,
+                    size=RA,
+                    shape=level
+                    ))+
+    geom_point(alpha=.99,key_glyph="point")+
+    #geom_jitter(position=position_jitter(0.01))+
+    geom_hline(yintercept=-log10(0.05),linetype=2,color="lightgrey")+
+    scale_shape_manual(values=c(17,25,1))+   #顺序c（富集,下调，无差别）
+        scale_size_continuous(range = c(1,10),
+                          breaks = c(1,3,5,7,9),
+                          labels = c('0.1','0.5','1.5','3.0','5.0')
+                          )+
+    guides(color="none",shape="none")+#隐藏图例
+    labs(x=taxlevel,y="-log10(P)",title=title)+
+    scale_x_discrete(breaks=getBreak(data$ASVID,data$tax),
+                     labels=c("Oxalobacteraceae" 
+                                              ,"Xanthobacteraceae" 
+                                              ,"Comamonadaceae"
+                                              ,"Azospirillaceae"
+                                              ,"Rhizobiaceae"
+                                              ,"Caulobacteraceae"
+                                              ,"Flavobacteriaceae"
+                                              ,"Devosiaceae"
+                                              ,"Pseudomonadaceae"
+                                              ,"Sphingomonadaceae"
+                                              ,"Chitinophagaceae"
+                                              ,"Microscillaceae"
+                                              ,"Xanthomonadaceae" 
+                                              ,"Streptomycetaceae"
+                                              ,"Bacillaceae"
+                                              ,"Micromonosporaceae"
+                                              ,"o_Burkholderiales|f_Unclassified"
+                                              ,"Rubritaleaceae"
+                                              ,"Methylophilaceae"
+                                              ,"Others"),
+                     expand = expansion(mult = 0.01))+
+    geom_text_repel(aes(ASVID,neglogp,label=paste0(ASVID)),
+                    gtext,
+                    colour='black', 
+                    size =3,
+                    box.padding = 1, 
+                    point.padding = 0.8, 
+                    segment.color = "#F4F4F3",
+                    show.legend = F)+#添加文字标签
+    scale_color_manual(values = platte)+
+    mytheme+
+    theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5),
+      panel.background = element_rect(fill = 'transparent')
+      #legend.position = 'top'#, legend.direction = "horizontal"
+      )
+  p
+  #添加条框
+  groupN<-c(unique(gtext$tax))
+  for(i in 1:length(groupN)){
+    x1<- data %>% dplyr::filter(tax==groupN[i])   #提取需要标记点的分组的数据集，包括起始点位置或者坐标
+    p<- p+annotate('rect',               #标记框颜色
+                   xmin =x1[1,]$ASVID,   #该分组的标记框起始标记位置
+                   xmax=x1[dim(x1)[1],]$ASVID, #该分组的标记框终止点标记位置
+                   ymin = -Inf, ymax = Inf, alpha=0.5,
+                   fill = ifelse(i %% 2 == 0,'white', 'gray90'))  #根据位置来标记背景色
+   }
+  p
+
+```
+
+# Fig.3d
+```{r}
+source("/Users/zhenghongwang/Desktop/EasyAmplicon/my_function/manhattanPlot.R")
+library(dplyr)
+
+data <- read.csv("all_compare_at_Species.csv", header = TRUE)
+otutab <- read.csv("otutab.csv", header = TRUE)
+tax <- read.table("taxonomy.txt", header = TRUE)
+group <- read.table("metadata.txt", header = TRUE, row.names = 1)
+
+treat <- c("DT")
+comp <- c("Endosphere")
+geneID <- c(#"rsl2rsl4",
+            "gl2") 
+taxlevel <- c("Family") #标记水平
+
+for (i in treat) {
+  for (j in comp) {
+    for (k in geneID) {
+      for (x in taxlevel) {
+ print(paste0(i, j, k, x))
+      }
+    }
+  }
+}
+#根内topN
+group2<-group %>% dplyr::filter(compartment=="Endosphere")
+data2<-otutab[,c("ASVID",rownames(group2))]
+id<-data2$ASVID
+tax2<-tax %>% dplyr::filter(ASVID %in% id)
+##输入文件整理(只设定根际topN和根内topN)
+if (j=="Endosphere"){
+  dataN<-data2
+  taxN<-tax2
+}
+#计算分类级topN及其顺序
+topN<-20
+tax_sum<-taxSum(dataN,taxN,level=x,topN=topN)
+#初始文件整理
+groupijk<-group %>% dplyr::filter(group==i & compartment==j) %>% dplyr::filter(genotype==k|genotype=="Col-0")
+dataijk<-otutab[,c("ASVID",rownames(groupijk))]
+id<-dataijk$ASVID
+taxijk<-tax %>% dplyr::filter(ASVID %in% id)
+dim(dataijk)
+rownames(dataijk)<-dataijk$ASVID
+dataijk<-dataijk[,-1]
+dataijk2<-data.frame((t(t(dataijk)/colSums(dataijk)))*100)
+dataijk2$RA<-rowSums(dataijk2)/dim(dataijk2)#计算特定组分，处理，基因型下的物种的平均相对丰度
+dataijk2$ASVID<-rownames(dataijk2)   #设置ASVID值
+
+#输入文件整理
+plotdata<-data %>% dplyr::filter(group==paste0(i,"_",j) & compare==paste0(k,"_VS_","Col-0") & !basemean==0)
+dataijk3<-dataijk2 %>% dplyr::filter(ASVID %in% plotdata$ASVID)
+dataijk3<-dataijk3[,c("ASVID","RA")]   #
+plotdata<-merge(plotdata,dataijk3,by="ASVID")  #在绘图文件中添加组间平均相对丰度RA
+#plotdata$RA
+plotdata$tax<-plotdata[,x]   #设定tax分类级作为着色的列
+#设置绘图数据的行排布顺序
+plotdata$tax<-gsub("o_Burkholderiales|f_Unclassified","Burkholderiales_Unclassified",plotdata$tax)
+plotdata$level<-ifelse(plotdata$level=="Enriched_in_rsl2rsl4"|plotdata$level=="Enriched_in_gl2-5",paste0("Enriched"),plotdata$level)
+plotdata$level<-ifelse(plotdata$level=="Enriched_in_Col-0",paste0("Depleted"),plotdata$level)
+plotdata$level<-ifelse(plotdata$level=="Non_Significant",paste0("NonSig"),plotdata$level)
+plotdata$level<-factor(plotdata$level,levels=c("Enriched",   #rsl2rsl4只有两个水平，所以没有enrich
+ "Depleted",
+ "NonSig"))
+#data<-plotdata
+#taxlevel=x
+#topN=topN
+NS=FALSE
+#size="weighted"
+#title=paste(i,j,x,k,"VS","Col-0",sep="_")
+
+ if (NS==TRUE){
+    data<-plotdata[-which(plotdata$level=="NonSig"),]
+  } 
+  if (NS==FALSE){
+    data<-plotdata
+  }
+  dim(data)
+  
+  #data轴着色等级及其丰度等文件
+  top_tax=factor(head(rownames(tax_sum),n=dim(tax_sum)[1]),ordered = TRUE)#99%   per行名为 具体分类等级下的名字，列为数量
+  top_tax<-factor(top_tax,ordered = TRUE)
+  
+  #自己设定主要展示的分类级，其他的变为Others
+  data$tax=data[,taxlevel]
+  data$tax<-ifelse(data$tax %in% top_tax,data$tax,paste0("Others"))
+  
+  #按指定顺序排列所选水平顺序(这里默认顺序是从打大小)
+  data_ing<-data.frame()
+  for (t in 1:length(top_tax)){
+    dataT<-data %>% dplyr::filter(tax==top_tax[t])
+    data_ing<-rbind(data_ing,dataT)
+  }
+  data<-data_ing
+  data$num=1:dim(data)[1]## 设置节点的顺序
+  
+  #Claculatelabemedian 标签位置确定
+  temp=data[c(data$tax %in% top_tax),c("tax","num")]
+  mat_mean=aggregate(temp[,-1],by=temp[1],FUN=median)  #median  计算节点位置中位数，便于X轴刻度标签位置
+  
+  ###由于data轴为分类水平-门-的标签，属于分类变量，非连续性，如果直接画，同一门类将呈一条重合线，很难看。
+  #因此，需要将这种分类排列转化为连续性排列
+  #NegtivelogPvalueformanhattan
+  data$neglogp=-log10(data$pvalue)
+  data$otu=data$ASVID
+  #data=arrange(data,Kindom,Phylum,Class,Order,Family,Genus,Species)
+  data$otu=factor(data$otu,levels=unique(data$otu))#setxorder
+  
+  #Setmaxneglogp    设置y轴最大值上限，不要过大
+  data$neglogp<-ifelse(data$neglogp=="NaN",0,data$neglogp)
+  if(max(data$neglogp)>20){
+    data[data$neglogp>20,]$neglogp=20
+  } else {
+    data$neglogp<-data$neglogp
+  }
+  #设置最底下的-log10的分界线，以显著的最低的值-logpvalue的为基准线
+  dat2<-data %>% dplyr::filter(!level=="NonSig")
+  
+  #theme：
+  library(ggplot2)
+  mytheme<- theme(
+  plot.title  = element_text(color = "black", size   = 8, hjust = 0.5),  #主标题样式
+  #plot.subtitle = element_text(color = "black", size   = 8,hjust = 0.5),  #副标题样式
+  text=element_text(size=10,face="bold"),
+  axis.title=element_text(size=12,face="bold",color="black"),   #轴标题样式
+  axis.text = element_text(size=10,face="bold",color="black"),  #轴刻度样式
+  axis.text.x = element_text(colour = "black",angle = 90), 
+  legend.title = element_text(size=10,face="bold",color="black"), #图例标题
+  legend.text = element_text(size=10,face="bold",color="black"),  #图例样式
+  legend.background = element_blank(),#图例背景
+  legend.position="right", #图例位置，指定与否默认右侧，不要:none
+  axis.line.y = element_line(color = "black", linetype = "solid",size=0.2), # y轴线特征
+  axis.line.x = element_line (color = "black",linetype = "solid",size=0.2), # x轴线特征
+  panel.grid.major =element_blank(), panel.grid.minor = element_blank(),# 去除任何网格和背景   
+  panel.border = element_rect( size = 0.2,fill = NA))
+  
+  ###全图
+  platte<-c("darkcyan","yellow","green","purple3","red","pink","brown4","darkseagreen3","palegreen2","olivedrab1","magenta2","brown4","tomato1","cyan1","violetred3",
+ "hotpink2","steelblue3","lightskyblue2","forestgreen","gray50")
+ 
+  #固定分组和ASVID
+  
+  data$tax<-factor(data$tax,levels=c("Oxalobacteraceae"
+   ,"Xanthobacteraceae" 
+   ,"Comamonadaceae"
+   ,"Azospirillaceae"
+   ,"Rhizobiaceae"
+   ,"Caulobacteraceae"
+   ,"Flavobacteriaceae"
+   ,"Devosiaceae"
+   ,"Pseudomonadaceae"
+   ,"Sphingomonadaceae"
+   ,"Chitinophagaceae"
+   ,"Microscillaceae"
+   ,"Xanthomonadaceae" 
+   ,"Streptomycetaceae"
+   ,"Bacillaceae"
+   ,"Micromonosporaceae"
+   ,"Burkholderiales_Unclassified"
+   ,"Rubritaleaceae"
+   ,"Methylophilaceae"
+   ,"Others"))
+  data<-arrange(data,tax)   #根据之前初画的mahatan图的顺序，调整分类的紧密程度
+  data$ASVID<-factor(data$ASVID,levels=unique(data$ASVID))   #根据调整好的顺序，固定ASV的顺序
+  
+  #刘永鑫老师函数：调整间隔
+  getBreak<-function(x,y){
+    freq<-as.vector(table(y)) #table()计算频数
+    half_freq<-freq%/%2
+    for (i in seq(2,length(freq))){
+      new_num<-freq[i]+freq[i-1]
+      freq[i]=new_num}
+    pos<-freq-half_freq
+    break_point<-as.vector(x[pos])
+    return(break_point)
+  }
+  
+  gtext<-data %>% dplyr::filter(!level=="NonSig")   #标记ASVID的列表，可以自定义设置
+  
+  #####
+  library(ggrepel)
+  p = ggplot(data,aes(x=ASVID,
+      y=neglogp,
+      color=tax,
+      size=RA,
+      shape=level
+      ))+
+    #coord_cartesian(ylim = c(0,2.2))+
+    geom_point(alpha=.99,key_glyph="point")+
+    geom_jitter(position=position_jitter(0.01))+
+    geom_hline(yintercept=-log10(0.05),linetype=2,color="lightgrey")+
+    scale_shape_manual(values=c(17,25,1))+
+    #scale_size_continuous(range = c(0.1,5),
+    # breaks = c(0.1,0.5,1.5,3.0,5.00),
+    # labels = c('0.1','0.5','1.5','3.0','5.0')
+    # )+
+ scale_size_continuous(range = c(1,10),
+     breaks = c(1,3,5,7,9),
+     labels = c('0.1','0.5','1.5','3.0','5.0')
+     )+
+    guides(color="none",shape="none")+#隐藏图例
+    labs(x=taxlevel,y="-log10(P)",title=paste(i,j,x,k,"VS","Col-0"))+
+    scale_x_discrete(breaks=getBreak(data$ASVID,data$tax),
+labels=c("Oxalobacteraceae" 
+   ,"Xanthobacteraceae" 
+   ,"Comamonadaceae"
+   ,"Azospirillaceae"
+   ,"Rhizobiaceae"
+   ,"Caulobacteraceae"
+   ,"Flavobacteriaceae"
+   ,"Devosiaceae"
+   ,"Pseudomonadaceae"
+   ,"Sphingomonadaceae"
+   ,"Chitinophagaceae"
+   ,"Microscillaceae"
+   ,"Xanthomonadaceae" 
+   ,"Streptomycetaceae"
+   ,"Bacillaceae"
+   ,"Micromonosporaceae"
+   ,"Burkholderiales_Unclassified"
+   ,"Rubritaleaceae"
+   ,"Methylophilaceae"
+   ,"Others"),
+expand = expansion(mult = 0.01))+
+    geom_text_repel(aes(ASVID,neglogp,label=paste0(ASVID)),
+      gtext,
+      colour='black', 
+      size =3,
+      box.padding = 1, 
+      point.padding = 0.8, 
+      segment.color = "#F4F4F3",
+      show.legend = F)+#添加文字标签
+    scale_color_manual(values = platte)+
+    mytheme+
+    theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5),
+      panel.background = element_rect(fill = 'transparent')
+      #legend.position = 'top'#, legend.direction = "horizontal"
+      )
+  
+  #添加条框
+  groupN<-c(unique(gtext$tax))
+  for(i in 1:length(groupN)){
+    x1<- data %>% dplyr::filter(tax==groupN[i])   #提取需要标记点的分组的数据集，包括起始点位置或者坐标
+    p<- p+annotate('rect', #标记框颜色
+     xmin =x1[1,]$ASVID,   #该分组的标记框起始标记位置
+     xmax=x1[dim(x1)[1],]$ASVID, #该分组的标记框终止点标记位置
+     ymin = -Inf, ymax = Inf, alpha=0.5,
+     fill = ifelse(i %% 2 == 0,'white', 'gray90'))  #根据位置来标记背景色
+   }
+  p
+  (plotname<-paste(i,j,x,k,"VS","Col-0","_manhatan_size_version2.pdf",sep="_"))
+  ggplot2::ggsave(plotname,p,device = "pdf",width = 8.6,height = 4.5)
+
+
+
+```
