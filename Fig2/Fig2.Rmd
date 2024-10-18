@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 source("groupPcoa.R")
 otutab<-read.csv("otutab.csv",header=TRUE,row.names = 1) 
 dim(otutab)
-group<-read.table("metadata.txt",header=TRUE,row.names = 1)
+group<-read.table("metadata_sto_deter_Net.txt",header=TRUE,row.names = 1)
 dim(group)
 meta<-group 
 library(dplyr)
@@ -28,10 +28,10 @@ plotmeta$betaGroup<-gsub("DT_Drought_soil_BS","DT_BS",plotmeta$betaGroup)
 plotmeta$betaGroup<-gsub("WT_Water_soil_BS","WT_BS",plotmeta$betaGroup)
 #调整顺序
 plotmeta$betaGroup<-factor(plotmeta$betaGroup,levels = c(
-     "DT_En_Col-0","DT_En_gl2-5","DT_En_rsl2rsl4",
-     "WT_En_Col-0","WT_En_gl2-5","WT_En_rsl2rsl4",
-     "DT_Rhi_Col-0","DT_Rhi_gl2-5","DT_Rhi_rsl2rsl4",
-     "WT_Rhi_Col-0","WT_Rhi_gl2-5","WT_Rhi_rsl2rsl4",
+     "DT_En_Col_0","DT_En_gl2","DT_En_rsl2rsl4",
+     "WT_En_Col_0","WT_En_gl2","WT_En_rsl2rsl4",
+     "DT_Rhi_Col_0","DT_Rhi_gl2","DT_Rhi_rsl2rsl4",
+     "WT_Rhi_Col_0","WT_Rhi_gl2","WT_Rhi_rsl2rsl4",
      "DT_BS","WT_BS"
 ))
 
