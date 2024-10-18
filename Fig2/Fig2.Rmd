@@ -65,7 +65,7 @@ p<-pcoa[[3]]+
 p
 ```
 
-#Fig.2c,d
+#Fig.2c
 ```{r}
 today <- Sys.Date()
 prefix <- c("RH")
