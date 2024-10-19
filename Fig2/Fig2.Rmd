@@ -1,4 +1,4 @@
----
+ing ---
 title: "Fig.2"
 author: "ZH"
 date: "2024-08-11"
@@ -26,7 +26,7 @@ plotmeta$betaGroup<-gsub("Endosphere","En",plotmeta$betaGroup)
 plotmeta$betaGroup<-gsub("Rhizosphere","Rhi",plotmeta$betaGroup)
 plotmeta$betaGroup<-gsub("DT_Drought_soil_BS","DT_BS",plotmeta$betaGroup)
 plotmeta$betaGroup<-gsub("WT_Water_soil_BS","WT_BS",plotmeta$betaGroup)
-#调整顺序
+# setting the order of groups for PCoA analysis
 plotmeta$betaGroup<-factor(plotmeta$betaGroup,levels = c(
      "DT_En_Col_0","DT_En_gl2","DT_En_rsl2rsl4",
      "WT_En_Col_0","WT_En_gl2","WT_En_rsl2rsl4",
@@ -162,7 +162,7 @@ p <- ggplot(plotData, aes(x = genotype, y = percent, fill = process)) +
   facet_grid(group ~ compartment)
 
 (plot_name <- paste0(Sys.Date(), prefix, "betaNTI_RCbray.pdf"))
-ggplot2::ggsave(plot_name, p, device = "pdf", width = 5.0, height = 3.8)
+#ggplot2::ggsave(plot_name, p, device = "pdf", width = 5.0, height = 3.8)
 
 p
 ```
