@@ -1,0 +1,226 @@
+---
+title: "Untitled"
+author: "ZH"
+date: "2023-11-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Fig.6a
+```{r}
+# loading the required packages
+library(ggplot2)
+library(gggenes)
+library(dplyr)
+
+# loading the data
+example_genes <- read.csv("Genome_4F10_gene_position.csv", header = TRUE)
+
+# selecting the target region of gene
+reg <- c("Ocd", "proVWX", "OpuE", "speC_speF", "PutA")
+regi <- reg[1]
+filtered_genes <- example_genes %>% filter(region == regi)
+
+# plot function
+plot_gene_positions <- function(data, fill_var) {
+  ggplot(data, aes(xmin = start, xmax = end, y = Genome, forward = orientation, fill = !!sym(fill_var), label = gene)) +
+    geom_gene_arrow() +
+    geom_gene_label() +
+    facet_wrap(~ region, scales = "free", ncol = 1) +
+    scale_fill_brewer(palette = "Paired")
+}
+
+# plot
+p <- plot_gene_positions(filtered_genes, "gene2")
+p
+```
+
+#Fig.6e
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(ggprism)
+library(ggsignif)
+# loading the data
+data <- read.csv("PEG_4F10_PRL_freshweight.csv", header = TRUE) %>%
+  drop_na() %>%
+  mutate(PRL = as.numeric(PRL),
+         treat = factor(treat, levels = c("buffer", "WT_4F10", "ocd_4F10")))
+# plot function
+create_plot <- function(data) {
+  ggplot(data, aes(treat, PRL, color = treat, fill = treat)) +
+    geom_bar(stat = "summary", fun = mean, position = "dodge") +
+    stat_summary(geom = "errorbar", fun.data = 'mean_se', width = 0.3) +
+    labs(x = "Inoculation", y = "Primary root length (mm)") +
+    geom_jitter(aes(fill = treat),  # 添加抖动散点
+              position = position_jitter(0.2),
+              shape = 21,
+              size = 2,
+              alpha = 0.7,
+              color = "black") +  # 这里确保散点的边框颜色为黑色
+    theme_prism(base_fontface = "plain", base_family = "serif", base_size = 16, base_line_size = 0.8, axis_text_angle = 45) +
+    scale_fill_manual(values = c("grey98", "#E69F00", "#56B4E9"), guide = guide_legend(reverse = TRUE)) +
+    facet_grid(~group, scales = 'free')+theme(legend.position = "none")
+}
+
+# statistics
+add_significance <- function(plot) {
+  plot + geom_signif(comparisons = list(c("buffer", "WT_4F10"), c("WT_4F10", "ocd_4F10"), c("buffer", "ocd_4F10")),
+                     map_signif_level = FALSE, test = "t.test", y_position = c(9, 9.2, 9.5),
+                     vjust = 0.5, extend_line = 0.05, size = 0.8, color = "black") +
+    labs(title = "4F10_vs_ocd_4F10") +
+    theme_classic()
+}
+
+# plot
+p0 <- create_plot(data)
+
+# marker the significant differences
+p01 <- add_significance(p0)
+p01
+
+```
+
+#Fig.6e
+```{r}
+# 读取数据
+data <- read.csv("PEG_4F10_PRL_freshweight.csv", header = TRUE) %>%
+  drop_na() %>%
+  mutate(freshweight = as.numeric(freshweight),
+         treat = factor(treat, levels = c("buffer", "WT_4F10", "ocd_4F10")))
+
+# 绘图函数
+create_plot <- function(data) {
+  ggplot(data, aes(treat, freshweight, color = treat, fill = treat)) +
+    geom_bar(stat = "summary", fun = mean, position = "dodge") +
+    stat_summary(geom = "errorbar", fun.data = 'mean_se', width = 0.3) +
+    labs(x = "Inoculation", y = "Shoot fresh weight (mg)") +
+    geom_jitter(aes(fill = treat),  # 添加抖动散点
+          position = position_jitter(0.2),
+          shape = 21,
+          size = 2,
+          alpha = 0.7,
+          color = "black") +  # 这里确保散点的边框颜色为黑色
+    theme_prism(base_fontface = "plain", base_family = "serif", base_size = 16, base_line_size = 0.8, axis_text_angle = 45) +
+    scale_fill_manual(values = c("grey98", "#E69F00", "#56B4E9"), guide = guide_legend(reverse = TRUE)) +
+    facet_grid(~group, scales = 'free')
+}
+
+# 添加统计显著性
+add_significance <- function(plot) {
+  plot + geom_signif(comparisons = list(c("buffer", "WT_4F10"), c("WT_4F10", "ocd_4F10"), c("buffer", "ocd_4F10")),
+                     map_signif_level = FALSE, test = "t.test", y_position = c(90, 92, 95),
+                     vjust = 0.5, extend_line = 0.05, size = 0.8, color = "black") +
+    labs(title = "4F10_vs_ocd_4F10") +
+    theme_classic()
+}
+p0 <- create_plot(data)
+# 添加显著性标记
+p01 <- add_significance(p0)
+p01
+
+```
+
+# Fig. 6f
+```{r}
+library(magrittr)   # 
+data<-read.table("ocd_growthrate.txt",header=TRUE)
+library(allparametertest)
+data2<-data #%>% filter(genotype=="Col-0" & !treat=="rewater")
+sum<-summarySE(data2,measurevar="growth_rate",groupvars=c("strain","time"),na.rm=TRUE)
+#dt<-sum %>% dplyr::select(strain,time,growth_rate,se) %>% mutate(mean=growth_rate) %>% dplyr::select(!growth_rate)
+data<-sum
+data$time<-factor(data$time,levels = c("4h","8h","12h","24h"))
+data$strain<-factor(data$strain,levels = c("ocd_4F10","4F10"))
+
+#  绘图
+p2<-ggplot(data,aes(x=time,y=growth_rate,
+                    group=strain,
+                    shape=strain,
+                    colour=strain))+
+  geom_point(size=1.0)+
+  geom_line()+   #此行代码不能与——geom_xspline() 
+  scale_shape_manual(values=c(16,16),
+                             guide = guide_legend(reverse=TRUE))+
+          scale_color_manual(values=c("#04ae54","#70A5D9"),
+                             guide = guide_legend(reverse=TRUE))+
+  geom_errorbar(aes(x=time,ymin=growth_rate-sd,ymax=growth_rate+sd),     #error bar
+                width=0.05,#color='black',#position=position_dodge(0.5), 
+                size=0.2)+
+  labs(x="Genotypes",y="  Growth rate (%)")+ #title
+  theme_classic()
+p2
+data<-read.table("ocd_growthrate.txt",header=TRUE)
+list<-list(c("ocd_4F10","4F10"))
+for (i in unique(data$time)){
+  for (x in 1:length(list)){
+    dataix<-data %>% dplyr::filter(time==i & strain %in% c(list[[x]][1],list[[x]][2]))
+    test<-t.test(growth_rate~strain,dataix)
+    print(paste(i,list[[x]][1],list[[x]][2],"t.test",test$p.value,sep = " "))
+  }
+}
+```
+
+# Fig.6h
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+data <- read.csv("data_ROS.csv", header = TRUE)
+data <- data %>% drop_na()
+data$rate <- as.numeric(data$rate)
+data$name <- paste(data$strain, data$group, data$batch, sep = "_")
+
+data0 <- data.frame()
+for (i in unique(data$name)) {
+  data0i <- data %>% filter(name == i) %>% arrange(desc(rate))
+  data0i <- data0i[c(-1, -6),]
+  data0 <- rbind(data0, data0i)
+}
+
+data <- data0
+data$treat <- data$strain
+data$index <- data$rate
+index <- "Survival rate (%)"
+
+data$treat <- factor(data$treat, levels = c("4F10", "ocd_4F10"))
+
+p0 <- ggplot(data, aes(treat, rate, fill = treat)) +
+  geom_bar(stat = "summary", fun = mean, position = "dodge") +
+  stat_summary(geom = "errorbar", fun.data = 'mean_se', width = 0.3) +
+  labs(x = "Inoculation", y = paste0(index)) +
+  geom_jitter(aes(colour = factor(treat)),
+              position = position_jitter(0.22),
+              size = 2,
+              alpha = 0.9) +
+  theme_prism(
+    base_fontface = "plain",
+    base_family = "serif",
+    base_size = 16,
+    base_line_size = 0.8,
+    axis_text_angle = 45
+  ) +
+  scale_fill_manual(values = c("#E69F00", "#56B4E9"),
+                    guide = guide_legend(reverse = TRUE)) +
+  facet_grid(~ group, scales = 'free')
+
+p01 <- p0 + geom_signif(comparisons = list(
+  c("4F10", "ocd_4F10")
+),
+map_signif_level = TRUE,
+test = "t.test",
+y_position = 0.5,
+vjust = 0.5,
+extend_line = 0.05,
+size = 0.8,
+color = "black") +
+labs(title = "4F10_vs_ocd_4F10")
+
+p01 <- p01 + theme_classic()
+p01
+
+```
