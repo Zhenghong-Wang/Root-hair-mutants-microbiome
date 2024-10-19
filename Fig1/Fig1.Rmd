@@ -19,7 +19,7 @@ library(ggplot2)
 library(agricolae)
 bardata <- read.table("root_hair_density.txt", header = TRUE)
 bardata
-# 绘制柱状图并添加抖动散点
+# bar plot 
 pbar2 <- ggplot(bardata, aes(x = genotype, y = hairs)) +
   coord_cartesian(ylim = c(0, 1.2 * max(abs(bardata$hairs)))) + 
   stat_summary(aes(fill = genotype),
@@ -53,14 +53,14 @@ p <- pbar2 +
 p
 
 ```
+
 # Fig.1e
 ```{r}
-# Load the data
+# Loading data
 data<-read.table("RH_NS_S_shoot_weight_ratio.txt", header =TRUE, sep = "\t") 
-# Order of genotype
+# set the order of genotypes
 data$genotype<-factor(data$genotype, levels = c("rsl2rsl4", "Col_0", "gl2"))
 data$treat<-factor(data$treat,levels = c("Sterilized", "Non-sterilized"))
-# function for plot
 p<-ggplot(data, aes(treat, weight_ratio, color = treat, group=treat,fill = treat)) +
     coord_cartesian(ylim=c(20,90))+  
     geom_bar(stat = "summary", fun = mean, position = "dodge") +
