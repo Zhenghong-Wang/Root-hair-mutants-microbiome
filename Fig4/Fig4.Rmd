@@ -16,26 +16,23 @@ library(tidyverse)
 library(ape)
 library(circlize)
 
-# 读取元数据
+# loading data
 dataAtLSPHERE <- read.delim("isolates_taxonomy.txt", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE)
 dataAtLSPHERE$Well1 <- gsub("_","",dataAtLSPHERE$Well1)
 dataAtLSPHERE <- dataAtLSPHERE %>% dplyr::select(Well1, Phylum, Order, Family, Genus)
 
-# 菌株颜色映射值 (根据 Phylum 统计信息调整，14 个颜色)
+# color assign for Phylum 
 colorScaleStrains <- setNames(
   c("#fd302f","#CD2990","#00FF00","#fdf399","#EDB31E",
     "#a5d3ed","#4682B4","#B5B5B5","#FF69B4"),  
   c("Alphaproteobacteria","Betaproteobacteria","Gammaproteobacteria","Actinobacteria",
     "Firmicutes","Verrucomicrobia", "Bacteroidetes","Flavobacteria","Myxococcota"))
 
-# 定义根据菌株获取颜色的函数
+# define the color for each strain according their phylum information 
 annot_color_Leaf_colNr <- function(strain, df = dataAtLSPHERE){
-  # 根据菌株信息获取颜色，dataAtLSPHERE 包含菌株的分类信息
   strain = as.character(strain)
   if(strain %in% df[["Well1"]]){
     phylum = as.character(df[["Phylum"]][df[["Well1"]] == strain])
-    
-    # 优先根据 Phylum 分配颜色
     if (phylum == "Alphaproteobacteria") {
       color <- "#fd302f"
     } else if (phylum == "Betaproteobacteria") {
@@ -61,10 +58,10 @@ annot_color_Leaf_colNr <- function(strain, df = dataAtLSPHERE){
   return(color)
 }
 
-# 读取菌株列表和重新 rooted 的进化树
+# loading the phylogenetic tree 
 tree2plot <- read.tree("RH_all_da_rep3.nwk")
 
-# 计算绘图参数
+#Calculation of Plotting Parameters
 angle <- (2 * pi) / length(tree2plot$tip.label)
 angles <- ((1:length(tree2plot$tip.label)) - 1) * angle
 names(angles) <- tree2plot$tip.label
@@ -72,84 +69,83 @@ start.angles <- (angles - angle / 2) * (180 / pi)
 end.angles <- (angles + angle / 2) * (180 / pi)
 radius <- 0.7
 
-# 获取菌株颜色
+# gain of colors of strain
 cols_strains <- sapply(tree2plot$tip.label, annot_color_Leaf_colNr)
 
-# 设置进化树枝长
+# Setting the branch length of phylogenetic tree  
 tree2plot$edge.length <- rep(0.029, length(tree2plot$edge.length))
 colorScaleStrains2 <- paste(colorScaleStrains, "86", sep = "")
-names(colorScaleStrains2) <- names(colorScaleStrains)  # 将名称复制到 colorScaleStrains2
+names(colorScaleStrains2) <- names(colorScaleStrains) 
 colorScaleStrains2
 
 
-# 绘制进化树
+# plotting the phylogenetic tree 
 pdf("fig.pdf", height = 5, width = 5)
 par(oma = c(0, 0, 0, 0))
 
-# 减少空白区域
+Here's the simplified code with English comments:
+
+# Reduce white space
 plot(tree2plot, type = "fan", align.tip.label = TRUE, plot = FALSE, no.margin = TRUE, x.lim = c(-0.8, 0.8), y.lim = c(-0.8, 0.8)) 
 
-# 绘制背景扇形，用不同颜色代表不同门
+# Draw background sectors with different colors representing different clades
 for (i in unique(tree2plot$tip.label)) {
-  # 获取当前菌株的颜色
+  # Get the color for the current strain
   col <- cols_strains[i]
   
-  # 检查颜色是否有效
+  # Check if the color is valid
   if (!is.na(col)) {
-    # 如果颜色有效，则添加透明度
+    # If the color is valid, add transparency
     col <- paste(col, "30", sep = "") 
   } else {
-    # 如果颜色无效，则使用默认的透明灰色
+    # If the color is invalid, use default transparent grey
     col <- "grey30"  
   }
   
-  draw.sector(start.angles[i], end.angles[i], rou1 = 0.63, # 控制进化树彩色扇形区域
+  draw.sector(start.angles[i], end.angles[i], rou1 = 0.63, 
               col = col, clock.wise = FALSE, border = NA)
 }
 par(new = TRUE)
 
-# 再次绘制树图，确保树图在扇形上方绘制
-#plot(tree2plot, type = "fan", align.tip.label = TRUE, no.margin = TRUE, x.lim = c(-0.8, 0.8), y.lim = c(-0.8, 0.8))
-
-# 减少空白区域
+# Redraw the tree plot to ensure it is plotted above the sectors
 plot(tree2plot, type = "fan", align.tip.label = TRUE, 
      x.lim = c(-0.8, 0.8), y.lim = c(-0.8, 0.8), 
      edge.width = 0.8,
      cex = 0.4, label.offset = 0.01)  
 
+# Add legend
 legend(x = 0.5,y = 1.2, legend = names(colorScaleStrains2), fill = colorScaleStrains2, cex = 0.3,border = NA)
 
-# 添加外圈，颜色与扇形对应
-outer_radius <- 0.67  # 控制注释圆的大小
+# Add outer circle with colors corresponding to the sectors
+outer_radius <- 0.67  
 for (i in unique(tree2plot$tip.label)) {
-  # 调整颜色亮度
-  outer_col <- adjustcolor(cols_strains[i], alpha.f = 0.5)  # 使颜色更透明
+  outer_col <- adjustcolor(cols_strains[i], alpha.f = 0.5)  
   draw.sector(start.angles[i], end.angles[i], rou1 = outer_radius - 0.02, rou2 = outer_radius, col = outer_col, clock.wise = FALSE, border = NA)
 }
 
-# 可自定义添加多个外圈.
+# Customization for adding multiple outer circles.
 
 dev.off()
-
 ```
+
 
 # Fig.4b.c 
 ```{r}
-# 加载必要的库
+# loading the required packages
 library(dplyr)
-library(allparametertest)
+library(allparametertest)  
 library(ggplot2)
 library(ggpubr)
 
-# 读取数据
+# loading soure data
 sj <- read.csv("25PEG.csv", header = TRUE)
 sj$isolates <- ifelse(sj$isolates == "1.00E+05", "1E5", sj$isolates)
 
-# 计算统计摘要
+# parameter summary 
 e1 <- summarySE(sj, groupvars = c("treat", "isolates"), measurevar = "freshweight")
 e2 <- summarySE(sj, groupvars = c("treat", "isolates"), measurevar = "PRL")
 
-# 设置因子水平
+# factors seeting
 isolates_levels <- rev(c("DER","4F10","AR","gl2","1E5","2D3","22D6","10D7","5A12","10C12","18F2","25F3","21B8","Buffer"))
 bardatai <- sj %>%
   mutate(
@@ -157,7 +153,7 @@ bardatai <- sj %>%
     treat = factor(treat, levels = c("RM", "RP"))
   )
 
-# freshweight 绘图
+# freshweight 
 p0 <- ggplot(bardatai, aes(x = isolates, y = freshweight, fill = as.factor(treat))) +
   geom_boxplot(
     position = position_dodge(0.85),
@@ -184,11 +180,9 @@ p0 <- ggplot(bardatai, aes(x = isolates, y = freshweight, fill = as.factor(treat
   facet_grid(~isolates, scales = 'free') +
   theme_classic()
 
-# 打印图形
-print(p0)
+p0
 
 #----PRL
-# 创建 ggplot 对象-绘制多组的图
 p1 <- ggplot(bardatai, aes(x = isolates, y = PRL, fill = as.factor(treat))) +
   geom_boxplot(
     position = position_dodge(0.85),
@@ -214,9 +208,7 @@ p1 <- ggplot(bardatai, aes(x = isolates, y = PRL, fill = as.factor(treat))) +
   scale_fill_manual(values = c("#04ae54", "#70A5D9"), guide = guide_legend(reverse = TRUE)) +
   facet_grid(~isolates, scales = 'free') +
   theme_classic()
-
-# 打印图形
-print(p1)
+p1
 ggarrange(p0,p1,ncol = 1,nrow = 2,labels = c("b","c"))
 ```
 
