@@ -25,10 +25,19 @@ data$isolates <- factor(data$isolates, levels = c("buffer", "4F10", "5A12", "10C
 data$date <- factor(data$date, levels = c("11d", "12d", "13d", "14d", "15d"))
 
 p0 <- ggplot(data, aes(isolates, Value, fill = isolates)) +
-  geom_bar(stat = "summary", fun = mean, position = "dodge") +
+  geom_bar(stat = "summary", 
+           fun = mean, 
+           color="black",
+           position = "dodge") +
   stat_summary(geom = "errorbar", fun.data = 'mean_se', width = 0.3) +
+    geom_jitter(#aes(fill = genotype),  # 添加抖动散点
+              position = position_jitter(0.2),
+              shape = 21,
+              size = 2,
+              alpha = 0.7,
+              color = "black") +  # 这里确保散点的边框颜色为黑色
   labs(x = "Genotypes", y = "Drought tolerance index") +
-  scale_fill_manual(values = c("grey98", rep("#EAF7F7", 6)), guide = guide_legend(reverse = TRUE)) +
+  scale_fill_manual(values = c("grey90", rep("#EAF7F7", 6)), guide = guide_legend(reverse = TRUE)) +
   facet_grid(~date, scales = 'free')
 
 p01 <- p0 +
@@ -39,11 +48,15 @@ p01 <- p0 +
     c("buffer", "DER"),
     c("buffer", "gl2"),
     c("buffer", "AR")
-  ), map_signif_level = TRUE, test = "t.test", y_position = 5.2 + 0.1 * (0:5), tip_length = 0.01, textsize = 2.0, vjust = 1.0, extend_line = 0.05, size = 0.8, color = "black") +
+  ), map_signif_level = FALSE, 
+  test = "t.test", 
+  y_position = 5.2 + 0.1 * (0:5), 
+  tip_length = 0.01, textsize = 2.0,
+  vjust = 1.0, extend_line = 0.05, 
+  size = 0.8, color = "black") +
   labs(title = "RH_peat_drought_exp")
 
 pf <- p01 + theme_classic()
 pf
-# 菌株名字对照合成菌群接菌策略修改
 
 ```
