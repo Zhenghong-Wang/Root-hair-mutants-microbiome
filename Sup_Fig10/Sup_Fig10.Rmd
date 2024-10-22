@@ -24,7 +24,7 @@ datai <- data %>%
   filter(genotype %in% gt, group == "RM") %>%
   mutate(facet = paste(group, genotype, sep = "_"),
          inoculation = factor(inoculation, levels = c("buffer", "Rhizobium sp.4F10")))
-
+datai$genotype<-factor(datai$genotype,levels = c("Col_0", "ost1_3", "ein3 eil1", "coi1_16", "npr1"))
 # RM PRL
 p1 <- ggplot(datai, aes(x = inoculation, 
                         y = primary_root_length, 
@@ -69,6 +69,8 @@ datai <- data %>%
          inoculation = factor(inoculation, levels = c("buffer", "Rhizobium sp.4F10")))
 
 # RP PRL
+datai$genotype<-factor(datai$genotype,levels = c("Col_0", "ost1_3", "ein3 eil1", "coi1_16", "npr1"))
+
 p3 <- ggplot(datai, aes(x = inoculation, y = primary_root_length, color = inoculation, group = inoculation, fill = inoculation)) +
   coord_cartesian(ylim = c(0, max(datai$primary_root_length) * 1.05)) +
   stat_summary(fun = mean, geom = "bar", width = 0.7) +
