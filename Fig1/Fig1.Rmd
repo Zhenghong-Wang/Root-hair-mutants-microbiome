@@ -82,3 +82,52 @@ p01 <-p+ geom_signif(comparisons = list(c("Sterilized", "Non-sterilized")),
     theme_classic()
 p01
 ```
+## fig.1e for sterilized treatment
+```{r}
+# Load the data
+data <- read.table("RH_NS_S_shoot_weight_ratio.txt", header = TRUE, sep = "\t") 
+
+# Order of genotype
+data$genotype <- factor(data$genotype, levels = c("rsl2rsl4", "Col_0", "gl2"))
+data$treat <- factor(data$treat, levels = c("Sterilized", "Non-sterilized"))
+
+# data filter
+datai <- data %>% filter(treat == "Sterilized")
+
+p <- ggplot(datai, aes(genotype, weight_ratio, color = genotype, group = genotype, fill = genotype)) +
+  coord_cartesian(ylim = c(20, 90)) +  
+  stat_summary(aes(fill = genotype), fun = mean, geom = "bar", fun.args = list(mult = 1), color = "black", width = 0.7) +  
+  stat_summary(fun.data = "mean_se", fun.args = list(mult = 1), geom = "errorbar", color = "black", width = 0.2) +     
+  labs(x = "Inoculation", y = "Relative fresh weight (%)") +
+  geom_jitter(aes(fill = genotype), position = position_jitter(0.2), shape = 21, size = 2, alpha = 0.7, color = "black") +  
+  theme_prism(base_fontface = "plain", base_family = "serif", base_size = 16, base_line_size = 0.8, axis_text_angle = 45) +
+  scale_fill_manual(values = c("grey80", "grey80", "grey80"), guide = guide_legend(reverse = TRUE))
+
+p01 <- p + 
+  geom_signif(comparisons = list(c("rsl2rsl4", "Col_0"), c("Col_0", "gl2")), map_signif_level = FALSE, test = "t.test", y_position = c(85, 90), vjust = 0.5, extend_line = 0.05, size = 0.8, color = "black") +
+  labs(title = "mutant_vs_wt") +
+  theme_classic()
+
+p01
+```
+## fig.1e for Non-sterilized treatment
+```{r}
+datai <- data %>% filter(treat == "Non-sterilized")
+p <- ggplot(datai, aes(genotype, weight_ratio, color = genotype, group = genotype, fill = genotype)) +
+  coord_cartesian(ylim = c(20, 90)) +  
+  stat_summary(aes(fill = genotype), fun = mean, geom = "bar", fun.args = list(mult = 1), color = "black", width = 0.7) +  
+  stat_summary(fun.data = "mean_se", fun.args = list(mult = 1), geom = "errorbar", color = "black", width = 0.2) +     
+  labs(x = "Inoculation", y = "Relative fresh weight (%)") +
+  geom_jitter(aes(fill = genotype), position = position_jitter(0.2), shape = 21, size = 2, alpha = 0.7, color = "black") +  
+  theme_prism(base_fontface = "plain", base_family = "serif", base_size = 16, base_line_size = 0.8, axis_text_angle = 45) +
+  scale_fill_manual(values = c("#E69F00", "#E69F00", "#E69F00"), guide = guide_legend(reverse = TRUE))
+
+p01 <- p + 
+  geom_signif(comparisons = list(c("rsl2rsl4", "Col_0"), c("Col_0", "gl2")), map_signif_level = FALSE, test = "t.test", y_position = c(85, 90), vjust = 0.5, extend_line = 0.05, size = 0.8, color = "black") +
+  labs(title = "mutant_vs_wt") +
+  theme_classic()
+
+p01
+
+```
+
