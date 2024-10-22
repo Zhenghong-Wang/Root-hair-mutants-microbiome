@@ -1,0 +1,113 @@
+---
+title: "sup_fig_10"
+author: "ZH"
+date: "2024-08-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Sup_Fig10
+```{r}
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+
+# loading data 
+data <- read.table("PEG_phenotype.txt", header = TRUE, sep = "\t")
+gt <- c("Col_0", "ost1_3", "ein3 eil1", "coi1_16", "npr1")
+
+# select the parameter
+datai <- data %>% 
+  filter(genotype %in% gt, group == "RM") %>%
+  mutate(facet = paste(group, genotype, sep = "_"),
+         inoculation = factor(inoculation, levels = c("buffer", "Rhizobium sp.4F10")))
+
+# RM PRL
+p1 <- ggplot(datai, aes(x = inoculation, 
+                        y = primary_root_length, 
+                        color = inoculation, 
+                        group = inoculation, 
+                        fill = inoculation)) +
+  coord_cartesian(ylim = c(0, max(datai$primary_root_length) * 1.05)) +
+  stat_summary(fun = mean, geom = "bar", width = 0.7) +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), geom = "errorbar", width = 0.2) +
+  stat_compare_means(method = "t.test", aes(label = ..p.format..), label.x.npc = "center", label.y = 8.5, size = 3.0) +
+  geom_jitter(aes(colour=factor(inoculation)),
+    position = position_jitter(0.22),
+     size = 2,
+     alpha=0.9)+
+  labs(title = paste0("PEG_", unique(datai$group), "_", "Primary root length"), x = "Genotype", y = "Primary root length (cm)") +
+  scale_fill_manual(values = c("green3", "steelblue1"), guide = guide_legend(reverse = TRUE)) +
+  theme_bw()  +
+  facet_grid(~facet, scales = 'free')
+p1
+# RM FW
+p2 <- ggplot(datai, aes(x = inoculation, y = shoot_weight, color = inoculation, group = inoculation, fill = inoculation)) +
+  coord_cartesian(ylim = c(0, max(datai$shoot_weight) * 1.05)) +
+  stat_summary(fun = mean, geom = "bar", width = 0.7) +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), geom = "errorbar", width = 0.2) +
+  stat_compare_means(method = "t.test", 
+                     aes(label = ..p.format..), # p.signif
+                     label.x.npc = "center", 
+                     label.y = 8.5, size = 3.0) +
+  geom_jitter(aes(colour=factor(inoculation)),
+    position = position_jitter(0.22),
+     size = 2,
+     alpha=0.9)+
+  labs(title = paste0("PEG_", unique(datai$group), "_", "Shoot fresh weight"), x = "Genotype", y = "Shoot_fresh_weight (mg)") +
+  scale_fill_manual(values = c("green3", "steelblue1"), guide = guide_legend(reverse = TRUE)) +
+  theme_bw()  +
+  facet_grid(~facet, scales = 'free')
+p2
+
+datai <- data %>% 
+  filter(genotype %in% gt, group == "RP") %>%
+  mutate(facet = paste(group, genotype, sep = "_"),
+         inoculation = factor(inoculation, levels = c("buffer", "Rhizobium sp.4F10")))
+
+# RP PRL
+p3 <- ggplot(datai, aes(x = inoculation, y = primary_root_length, color = inoculation, group = inoculation, fill = inoculation)) +
+  coord_cartesian(ylim = c(0, max(datai$primary_root_length) * 1.05)) +
+  stat_summary(fun = mean, geom = "bar", width = 0.7) +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), geom = "errorbar", width = 0.2) +
+  stat_compare_means(method = "t.test", 
+                     aes(label = ..p.format..), 
+                     label.x.npc = "center", 
+                     label.y = 8.5, size = 3.0) +
+  geom_jitter(aes(colour=factor(inoculation)),
+    position = position_jitter(0.22),
+     size = 2,
+     alpha=0.9)+
+  labs(title = paste0("PEG_", unique(datai$group), "_", "Primary root length"), x = "Genotype", y = "Primary root length (cm)") +
+  scale_fill_manual(values = c("green3", "steelblue1"), guide = guide_legend(reverse = TRUE)) +
+  theme_bw()  +
+  facet_grid(~facet, scales = 'free')
+p3
+# RP FW
+p4 <- ggplot(datai, aes(x = inoculation, y = shoot_weight, color = inoculation, group = inoculation, fill = inoculation)) +
+  coord_cartesian(ylim = c(0, max(datai$shoot_weight) * 1.05)) +
+  stat_summary(fun = mean, geom = "bar", width = 0.7) +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), geom = "errorbar", width = 0.2) +
+  stat_compare_means(method = "t.test", aes(label = ..p.format..), label.x.npc = "center", label.y = 8.5, size = 3.0) +
+  geom_jitter(aes(colour=factor(inoculation)),
+    position = position_jitter(0.22),
+     size = 2,
+     alpha=0.9)+
+  labs(title = paste0("PEG_", unique(datai$group), "_", "Primary root length"), x = "Genotype", y = "Shoot_fresh_weight (mg)") +
+  scale_fill_manual(values = c("green3", "steelblue1"), guide = guide_legend(reverse = TRUE)) +
+  theme_bw()  +
+  facet_grid(~facet, scales = 'free')
+p4
+```
+# combind
+```{r}
+pall<-ggarrange(p1,p2,p3,p4,
+          ncol = 4,nrow=1,
+          labels = c("a","b","c","d"))
+
+```
+
+
